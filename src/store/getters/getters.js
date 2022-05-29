@@ -51,7 +51,14 @@ export default {
 
 
 
-    /*Геттеры для работы с формулами*/
+    // Редакторы уменю делать хорошую доку методу
+    // если напишешь /** и нажмешь enter
+    // Важно документировать каждую функцию
+    /**
+     * Геттеры для работы с формулами
+     * @param {*} state 
+     * @returns 
+     */
     allCellsInMetric: (state) => (metricId) => {
         let metricFound = null;
             for (let key in state.metricsGroups) {

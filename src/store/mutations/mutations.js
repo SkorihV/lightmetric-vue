@@ -58,9 +58,10 @@ export default {
     },
 
     PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL(state) {
+        // Три цикла это весело, особенно когда читаешь код))
         for (let groupKey in state.metricsGroups) {
             let group = state.metricsGroups[groupKey];
-            group.forEach(metric => {metric.isHideLikeGroup  = false})
+            group.forEach(metric => {metric.isHideLikeGroup  = false}) // почему не map?
             for (let i = 0; i < group.length; i++) {
                 let metric = group[i];
                 let foundNewGroup = false;
@@ -222,6 +223,9 @@ export default {
     /* working for data table*/
 
     REPLACE_METRIC_DATA(state, data) {
+        // Не оставляй большие функции одним потоком
+        // 1. Нужны комментарии
+        // 2. Нужно разбить на функции, прям внутрь можешь положить и последовательно их вызывать
         let metricFound     = null;
         let changeCategory  = false;
         let changePosition  = false;

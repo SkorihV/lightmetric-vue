@@ -18,7 +18,8 @@
           title="Норм"
       ></v-th>
       <v-th
-          v-for="mondayDate in mondaysList"
+          v-for="(mondayDate, idx) in mondaysList"
+          :key="idx"
           classes="table__th "
           :title="mondayDate"
           :data="mondayDataByIdAndPlanedAt({id: categoryId, planed: mondayDate})"
@@ -40,8 +41,8 @@ export default {
   },
   props: {
     categoryId: {
-      type: [String, Number],
-      require: true
+      type: Number, // Кажется ты всегда передаешь Number
+      required: true // required, а не require https://vuejs.org/guide/components/props.html#props 
     }
   },
   computed: {

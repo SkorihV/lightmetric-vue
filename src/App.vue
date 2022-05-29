@@ -39,7 +39,7 @@ export default {
   computed: {
     ...mapGetters([
         'tablesList',
-        'categoryNameById'
+        'categoryNameById' // FIXME: не используется
     ])
   },
   methods:{
@@ -51,7 +51,7 @@ export default {
       let storage = JSON.parse(localStorage.getItem('group'));
       if (!storage) {
         localStorage.setItem('group', JSON.stringify({ group: [] }));
-        storage = JSON.parse(localStorage.getItem('group'));
+        storage = JSON.parse(localStorage.getItem('group')); // FIXME: Зачем обновляем переменную если нигде ее не выводим?
       }
     },
   }

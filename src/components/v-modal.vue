@@ -63,7 +63,7 @@ export default {
     handlerDelete(e) {
       let t = e.target;
       if (t.closest('.delete a')) {
-        let deleteElement = t.closest('.delete a');
+        let deleteElement = t.closest('.delete a'); // Почему бы не поднть выше и не положить переменную в условие?
         e.preventDefault();
         this.DELETE_DATA({dataUrl: deleteElement.href, dataType: this.getDataForSubmitForm});
 

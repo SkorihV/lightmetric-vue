@@ -1,8 +1,18 @@
 <template>
+<!--
+  TODO:
+  Линтер ругается на @click=
+  Consider to use '.exact' modifier.eslint-plugin-vue
+ -->
     <tr
         v-if="!metric.isHideLikeGroup || isHide"
         class="table__tr"
-        :class="{'is-group': isGroup, 'is-hide': isHide, 'is-show': isShow, 'workInFormula':getMetricForFormula === metric.id}"
+        :class="{
+          'is-group': isGroup,
+          'is-hide': isHide,
+          'is-show': isShow,
+          'workInFormula': getMetricForFormula === metric.id
+        }"
         @click.ctrl="addMetricAlias"
         @click="setIdForFormulaEdit"
         :draggable="modeDragAndDrops"
@@ -62,7 +72,7 @@
 <script>
 import vTdCell from './v-td-cell'
 import vTdCellMain from './v-td-cell-main'
-import vTdCellVoid from './v-td-cell-void'
+import vTdCellVoid from './v-td-cell-void' // FIXME: переопределен ниже
 import {mapActions, mapGetters} from "vuex";
 import VTdCellVoid from "@/components/v-td-cell-void";
 
@@ -96,6 +106,7 @@ export default {
       if (!this.showInputBlockForWorkingFormula && !this.getMetricForFormula) {
         return false;
       }
+      // FIXME: Следующие две строчки ничего не делают и нигде не используются
       let metric = this.metricForId(this.getMetricForFormula)
       metric.formula += ` $${this.metric.id}$`;
     },
@@ -116,6 +127,7 @@ export default {
       }, 0)
     },
     dragAndDropRowEnd() {
+      // Подобные методы лучше комментировать
         this.$refs.row.style.opacity = '1';
 
         if (this.getCurrentIdMetricForOverDragAndDrop !== null && this.getCurrentIdMetricForDragAndDrop !== null) {

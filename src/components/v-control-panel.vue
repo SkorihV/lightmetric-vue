@@ -46,6 +46,7 @@
         class="btn btn-success control-panel__button"
         @click="showStat"
     ><i class="fas fa-signal"></i></button>
+    <!-- Напомню, @click="" с несколькими функциями лучше выносить в отдельны метод -->
     <button
         v-if="showCheckboxForStat"
         title="Сбросить галочки"
