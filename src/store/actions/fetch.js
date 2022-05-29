@@ -150,6 +150,7 @@ export default {
         if (metricId) {
             responseUrl += `?metric_id=${metricId}`;
         }
+        // let response не используется, значит не обязательно заводить переменную
         let response = await fetch(responseUrl, {
             method: 'POST',
             body: formData

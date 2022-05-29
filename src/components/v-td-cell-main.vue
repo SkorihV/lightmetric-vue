@@ -126,6 +126,7 @@ export default {
     },
 
     removeLocalRowOnId() {
+      // TODO: Частенько получаешь локалсторедж, можно вынести в utils
       let storage = JSON.parse(localStorage.getItem('group'));
 
       if (storage) {
@@ -147,7 +148,7 @@ export default {
       localStorage.setItem('group', JSON.stringify(storage));
     },
     getDataForStatCurrentMetric() {
-      let dataForStat         = {};
+      let dataForStat         = {}; // FIXME: Такую конструкцию можно смело делать через const
       dataForStat.id          = this.data.id;
       dataForStat.data        = [];
       dataForStat.name        = this.data.name;
@@ -157,8 +158,10 @@ export default {
       let cells = Object.entries(this.allCellsInMetric(this.data.id));
       cells = cells.map(item => {
         return item[1];
-      }).sort(function(a,b)  {
+      }).sort(function(a,b)  { // (a, b) => {} — стрелочные функции ванлав
         let a_date_arr = a.planed_at.split('-');
+        // Через деструктуризацию как-то понятнее (https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+        // const [day, month, years] = a.planed_at.split('-');
         let a_date = new Date(a_date_arr[2], a_date_arr[1], a_date_arr[0])
 
         let b_date_arr = b.planed_at.split('-');
@@ -168,6 +171,15 @@ export default {
 
       cells.forEach(data => {
         if (data.computed_value) {
+          // Два варианта улучшения вложенности:
+          // 1. Выносим в отдельную функцию
+          // 2. Делаем через тернарный оператор https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Operators/Conditional_Operator
+          // dataForStat.data.push(
+          //   this.isDateTime(data.computed_value) ? 
+          //   parseFloat(data.computed_value.replace(/:/g, '.')) : 
+          //   parseFloat(data.computed_value)
+          // );
+
           if (this.isDateTime(data.computed_value)) {
             dataForStat.data.push(parseFloat(data.computed_value.replace(/:/g, '.')));
           } else {
@@ -192,6 +204,8 @@ export default {
         }
     },
     isDateTime(value){
+      // У тебя тут один раз true и все остальное исключение
+      // Сделай второе условие первым, а все остальное уже исключением будет false
       if (value === false || value === '') {
         return false
       }

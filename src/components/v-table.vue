@@ -5,7 +5,7 @@
             :categoryId="categoryId"
         ></v-thead>
           <v-tr
-              v-for="metric in metrics"
+              v-for="(metric, idx) in metrics" :key="idx"
               :metric="metric"
           >
           </v-tr>

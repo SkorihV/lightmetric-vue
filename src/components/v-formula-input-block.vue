@@ -3,6 +3,10 @@
       class="formula-block"
       v-if="showInputBlockForWorkingFormula && modelValue != null"
   >
+  <!-- 
+    Можно повесить @submit.prevent="saveFormula" на форму
+    А у кнопки ничего не стопать. Так при нажание на enter форма тоже отправится.
+   -->
     <form
         ref="form"
         action="#"
@@ -30,7 +34,7 @@ import {mapActions, mapGetters, mapState} from "vuex";
 
 export default {
   name: "v-formula-input-block",
-  props: {
+  props: { // FIXME: пусто
   },
   data() {
     return {
@@ -59,6 +63,16 @@ export default {
   },
   watch: {
     getMetricForFormula() {
+      // TODO: неочевидная история с modelValue
+      // В нее ты записываешь metricItem из metricsGroups, но
+      // для инпута нужна только формула
+
+      // Можно сделать вот так
+      // this.metricItem = this.metricForId(this.getMetricForFormula)
+      // this.metricItemFormula = this.metricItem?.formula ?? '';
+      // v-if меняешь на metricItem, v-model на metricItemFormula
+
+      // Твое решение
       this.modelValue = this.metricForId(this.getMetricForFormula)
       if (this?.modelValue  && this.modelValue.formula == null) {
         this.modelValue.formula ='';

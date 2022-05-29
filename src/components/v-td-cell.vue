@@ -1,13 +1,14 @@
 <template>
+<!-- Template string лучше выглядит https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Template_literals -->
   <td
       :style="style"
       class="table__cell cell"
-      :class="classes + ' ' + colorCellClass"
+      :class="`${classes} ${colorCellClass}`"
       @contextmenu.prevent="getCellForm"
   >
     <div class="cell__content">
       <div v-if="data" class="cell__value">{{ valueInOutput }}</div>
-      <div v-if="unit && valueInOutput" class="cell__unit">&nbsp{{unit}}</div>
+      <div v-if="unit && valueInOutput" class="cell__unit">&nbsp;{{unit}}</div>
     </div>
     <div
         v-if="showFormulaMetric && isValue"
@@ -33,6 +34,17 @@ export default {
     vCommentTrigger
   },
   mounted() {
+    // Соблюдай структуру компонента:
+    // name
+    // mixins
+    // components
+    // props
+    // data
+    // created
+    // mounted
+    // etc...
+    // Коммент про this.isValue, которая выше не определена, но есть ниже.
+    // И чтобы мне прочитать mounted, нужно пробежаться по всему файлу, убедиться, что ты завел isValue
     if (this.data.value && this.data.computed_value) {
       this.isValue = this.data.value != this.data.computed_value
     }
@@ -44,7 +56,7 @@ export default {
   props: {
     data: {
       type: Object,
-      require: false
+      require: false // required: false можно не писать. Это значение по умолчанию в пропсах
     },
     classes: {
       type: String,
@@ -134,8 +146,16 @@ export default {
         return true;
       }
       return false;
+      // Можно и в одну строчку
+      // return this.data && this.data.comment
     },
     defineValueInInputData() {
+      // FIXME: старайся избегать вложенных условий
+      // Проще сделать исключение if (!this.data) return ''
+      // а потом уже вложенное условие.
+      // Либо можно вообще по красоте через переменную res
+      // Которую будешь менять если условие выполнилось
+
       if (this.data) {
         if (this.data.computed_value?.toString().length) {
           return this.data.computed_value.toString().replace(/ /g, "");
@@ -163,6 +183,8 @@ export default {
       return this.valueSeparatorThousands;
     },
     colorCellClass() {
+      // Снова вложенное условие
+      // Найди свой способ избегать их
       if (this.data) {
         if (!this.normal || !this.minimal || !this.defineValueInInputData) {
           return '';

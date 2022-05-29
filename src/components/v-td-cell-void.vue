@@ -6,7 +6,7 @@
   >
     <div class="cell__content">
       <div v-if="title" class="cell__title">{{title}}</div>
-      <div v-if="unit && title" class="cell__unit">&nbsp{{unit}}</div>
+      <div v-if="unit && title" class="cell__unit">&nbsp;{{unit}}</div>
     </div>
   </td>
 </template>

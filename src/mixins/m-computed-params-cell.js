@@ -1,6 +1,8 @@
 export default {
     methods: {
         updateColor() {
+            // TODO: разбей на подфункции
+            // можно вынести в utils
             let localMinimal = null;
             let localNormal = null;
             let localValueOutput = null;
