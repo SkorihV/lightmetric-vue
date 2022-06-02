@@ -5,14 +5,8 @@ export default {
     EDIT_MODE_OFF({commit}){
         commit('EDIT_MODE_TOGGLE', false);
     },
-    TOGGLE_DISPLAYING_COMMENT_IN_MODAL({commit}, flag) {
-
-        commit('CHANGE_DISPLAYING_COMMENT_IN_MODAL', flag);
-        if(flag) {
-            commit('REMOVE_ALL_STAT_GRAPH');
-        } else {
-            commit('DATA_FOR_COMMENT', {commentText: '', dateTime: null, userName: null});
-        }
+    TOGGLE_IS_SUBMITING({commit}) {
+        commit('CHANGE_IS_SUBMITING')
     },
     ADD_HTML_IN_MODAL({commit}, html) {
         commit('PUT_HTML_FOR_MODAL', html);

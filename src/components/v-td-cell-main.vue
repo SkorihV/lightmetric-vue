@@ -31,7 +31,7 @@
             @click="handlerClickComment"
         ></v-comment-trigger>
         <div
-            v-if="!isGroup"
+            v-if="!isGroup && isExistValuesInCells"
             class="td-main__show-stat-toggle"
              @click="handlerClickGraph">
           <i class="fas fa-signal"></i>
@@ -60,19 +60,13 @@ export default {
     vCommentTrigger,
     vCommentStorage
   },
-  mounted() {
-    if (this.data?.comment) {
-      this.isComment = true;
-    }
-  },
   props: {
     data: {
       type: Object,
-      require: true
+      required: true
     },
     classes: {
       type: String,
-      require: false,
       default: ''
     },
     isGroup: {
@@ -82,7 +76,6 @@ export default {
   },
   data() {
     return {
-      isComment: false,
       checkboxValue: false,
     }
   },
@@ -90,9 +83,8 @@ export default {
     ...mapActions([
         'TOGGLE_SHOW_HIDE_GROUP_METRICS',
         'SET_DATA_FOR_STAT_GRAPHS',
-        'REMOVE_ALL_DATA_FOR_STAT_GRAPHS',
         'REMOVE_DATA_FOR_STAT_GRAPHS',
-        'TOGGLE_SHOW_HIDE_MODAL',
+        'SHOW_MODAL',
         'FETCH_METRIC_FORM',
         'EDIT_MODE_ON',
         'EDIT_MODE_OFF',
@@ -126,7 +118,7 @@ export default {
     },
 
     removeLocalRowOnId() {
-      let storage = JSON.parse(localStorage.getItem('group'));
+      const storage = JSON.parse(localStorage.getItem('group'));
 
       if (storage) {
         let index = storage.group.indexOf(this.data.id);
@@ -141,28 +133,33 @@ export default {
     addLocalRowOnId() {
       let storage = JSON.parse(localStorage.getItem('group'));
 
-      if (storage.group.includes(this.data.id)) { return false;}
+      if (storage.group.includes(this.data.id)) {
+        return false;
+      }
       storage.group.push(this.data.id);
 
       localStorage.setItem('group', JSON.stringify(storage));
     },
     getDataForStatCurrentMetric() {
-      let dataForStat         = {};
-      dataForStat.id          = this.data.id;
-      dataForStat.data        = [];
-      dataForStat.name        = this.data.name;
-      dataForStat.dataLabels  = { enabled: true };
+      const dataForStat = {
+          id        : this.data.id,
+          data      : [],
+          name      : this.data.name,
+          dataLabels: { enabled: true }
+      };
 
 
       let cells = Object.entries(this.allCellsInMetric(this.data.id));
+
       cells = cells.map(item => {
         return item[1];
-      }).sort(function(a,b)  {
-        let a_date_arr = a.planed_at.split('-');
-        let a_date = new Date(a_date_arr[2], a_date_arr[1], a_date_arr[0])
+      }).sort((a, b) => {
+        const [a_day, a_month, a_years]  = a.planed_at.split('-');
+        const a_date      = new Date(a_years, a_month, a_day);
 
-        let b_date_arr = b.planed_at.split('-');
-        let b_date = new Date(b_date_arr[2], b_date_arr[1], b_date_arr[0])
+        const [b_day, b_month, b_years]  = b.planed_at.split('-');
+        const b_date = new Date(b_years, b_month, b_day);
+
         return a_date - b_date;
       })
 
@@ -192,13 +189,7 @@ export default {
         }
     },
     isDateTime(value){
-      if (value === false || value === '') {
-        return false
-      }
-      if (value.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null) {
-        return true;
-      }
-      return false;
+       return value.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null;
     },
     handlerClickComment() {
       this.SET_DATA_FOR_COMMENT({userName: this.data.uname, commentText: this.data.comment, dateTime: this.data.updated_at});
@@ -207,7 +198,7 @@ export default {
       this.RESET_MODAL()
           .then(()=> {
             this.getDataForStatCurrentMetric();
-            this.TOGGLE_SHOW_HIDE_MODAL(true);
+            this.SHOW_MODAL();
           });
 
     }
@@ -220,6 +211,18 @@ export default {
         'dataResetCheckboxesStat',
         'displayingComment'
     ]),
+    isComment() {
+      if (this.data?.comment) {
+        return true;
+      }
+      return false;
+    },
+    isExistValuesInCells() {
+      return  Boolean(Object.values(this.data.cells).filter(cell => {
+        return (cell.value !== null || cell.value !== '') && (cell.computed_value !== null || cell.computed_value !== '');
+      }).length);
+
+    }
   },
   watch: {
     checkboxValue() {
@@ -228,15 +231,14 @@ export default {
     dataResetCheckboxesStat() {
       this.checkboxValue = false;
     },
-    displayingComment() {
-      this.usingComment = false;
-    }
   },
-  beforeUpdate() {
-    if (this.data?.comment) {
-      this.isComment = true;
-    }
-  }
+  // beforeUpdate() {
+  //   if (this.data?.comment) {
+  //     this.isComment = true;
+  //   } else {
+  //     this.isComment = false;
+  //   }
+  // }
 }
 </script>
 

@@ -19,8 +19,6 @@ import {mapActions, mapGetters} from "vuex";
 
 export default {
   name: "v-comment-element",
-  props: {
-  },
   methods: {
     ...mapActions([''])
   },

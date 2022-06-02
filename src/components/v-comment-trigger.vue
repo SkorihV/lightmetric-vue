@@ -8,7 +8,7 @@ export default {
   props: {
     dataComment: {
       type: [String, Object],
-      require: true
+      required: true
     }
   }
 }

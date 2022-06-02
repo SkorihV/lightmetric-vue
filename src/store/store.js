@@ -16,6 +16,16 @@ let actions = {...init, ...formula, ...dragAndDrop, ...sidePanel, ...fetch, ...m
 export default createStore({
   state: {
     isLocal: null,
+    urlsForFetch      : {
+      dataList: '/lightmetric_vue/json_list',
+      metricForm: '/lightmetric_vue/type/form',
+      weekForm: '/lightmetric_vue/week/form',
+      cellForm: '/lightmetric_vue/weekcell/form',
+      updatePosition: '/lightmetric_vue/type/updatePositionMetrics',
+      savingMetricFormula: '/lightmetric_vue/metricformulaAdd',
+      updatingComputedValues: '/lightmetric_vue/cells/updateComputedValues'
+    },
+
     mondays           : [],
     metricsGroups     : [],
     mondaysData       : [],
@@ -32,14 +42,16 @@ export default createStore({
     showAverageWindow: false,
 
     metricForFormulaInput: null,  // выбранная ID метрики для работы с формулой
-    markedMetricsForStat: [],
     dataForStatGraph: {
       dataCells: [],
       planed: []
     },
+    metricIdForLighting: null,
 
-    dataForUpdateInFormulaCell: null,  // обновить данные в ряду ячеек исходя из даты
-    dataForUpdateInFormulaMetric: false,  // обновить данные во всех метриках
+    planedAtForUpdateInFormulaCell: null,  // дата для обновления в ряде ячеек
+    categoryIdForUpdateInFormulaMetric: null,  // ID категории для обновления во всех метриках
+    isProcessingFormulaForCategory: false, //Обновить все ячейки в категории после изменения формулы
+    isProcessingFormulaForCell: false, //Обновить все ячейки в ряду после изменения значения одной из ячеек
     resetCheckboxesStat: false,         // сбросить все галочки статистик
 
     showModal: false,
@@ -50,14 +62,16 @@ export default createStore({
     htmlForModal: '',
     editModeForModal: false,
     dataForSubmitForm: null,
+    isSubmiting: false,
 
     displayingCommentInModal: false,
     dataComment: {
       userName: null,
       dateTime: null,
       commentText: ''
-    }
+    },
 
+    dataForUpdateComputedValues: []
 
   },
   getters,

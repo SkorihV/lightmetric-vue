@@ -6,7 +6,8 @@ export default {
     SET_DATA_METRIC(state, data) {
 
         for (let key in data.metricsGroups) {
-            let storage = JSON.parse(localStorage.getItem('group'));
+            const storage = JSON.parse(localStorage.getItem('group'));
+
             data.metricsGroups[key].forEach(metric => {
                 metric.isHideLikeGroupMainMetric = storage.group.indexOf(metric.id) >= 0;
                 metric.isHideLikeGroup = false;
@@ -21,21 +22,21 @@ export default {
                             computed_value: '',
                             type_id: metric.id,
                             id: Math.random(),
-                            planed_at: monday
+                            planed_at: monday,
                         }
                     }
                 })
             })
         }
 
-        state.mondays = data.mondays;
-        state.metricsGroups = data.metricsGroups;
-        state.mondaysData = data.mondaysData;
-        state.categories = data.categories;
-        state.dateEnd = data.dateEnd;
-        state.dateStart = data.dateStart;
-        state.discussedWeek = data.discussedWeek;
-        state.dataForStatGraph.planed = data.mondays;
+        state.mondays                   = data.mondays;
+        state.dateEnd                   = data.dateEnd;
+        state.dateStart                 = data.dateStart;
+        state.categories                = data.categories;
+        state.mondaysData               = data.mondaysData;
+        state.metricsGroups             = data.metricsGroups;
+        state.discussedWeek             = data.discussedWeek;
+        state.dataForStatGraph.planed   = data.mondays;
     },
 
     SHOW_HIDE_METRICS(state, categoryId) {
@@ -60,12 +61,16 @@ export default {
     PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL(state) {
         for (let groupKey in state.metricsGroups) {
             let group = state.metricsGroups[groupKey];
-            group.forEach(metric => {metric.isHideLikeGroup  = false})
-            for (let i = 0; i < group.length; i++) {
-                let metric = group[i];
-                let foundNewGroup = false;
-                if (metric.isHideLikeGroupMainMetric) {
 
+            group.map(metric => {
+                metric.isHideLikeGroup = false;
+            });
+
+            for (let i = 0; i < group.length; i++) {
+                const metric = group[i];
+                let foundNewGroup = false;
+
+                if (metric.isHideLikeGroupMainMetric) {
                     for (let j = i + 1; j < group.length; j++) {
                         if (group[j].is_group === '1') {
                             foundNewGroup = true;
@@ -86,6 +91,7 @@ export default {
     SHOW_HIDE_METRIC(state) {
         state.showHideMetric = !state.showHideMetric;
     },
+
     CHANGE_MODE_DRAG_END_DROP(state) {
       state.modeDragAndDrops = !state.modeDragAndDrops;
     },
@@ -93,24 +99,28 @@ export default {
     SHOW_HIDE_CHECKBOXES_FOR_STAT(state) {
         state.checkboxesForStat = !state.checkboxesForStat;
     },
+
     HIDE_CHECKBOXES_FOR_STAT(state) {
         state.checkboxesForStat = false;
     },
+
     SHOW_HIDE_FORMULA(state) {
         state.formulaMetric = !state.formulaMetric;
     },
+
     SHOW_HIDE_INPUT_BLOCK(state) {
         state.modeWorksToFormula = !state.modeWorksToFormula
         if (!state.modeWorksToFormula) {
             state.metricForFormulaInput = null;
         }
     },
+
     /*control panel mutations end*/
 
 
     ADD_COMPUTED_VALUE(state, {metricId, planedAt, value}) {
-
         let metricFound = null;
+
         for (let key in state.metricsGroups) {
             if (!metricFound ) {
                 metricFound = state.metricsGroups[key].find( metric => {
@@ -133,11 +143,28 @@ export default {
         state.metricForFormulaInput = metricId;
     },
 
-    CHANGE_DATA_FOR_UPDATE_IN_FORMULA_METRIC(state) {
-        state.dataForUpdateInFormulaMetric = !state.dataForUpdateInFormulaMetric;
+    ADD_CATEGORY_ID_FOR_UPDATE_FORMULA(state, categoryId) {
+        state.categoryIdForUpdateInFormulaMetric = categoryId;
     },
-    CHANGE_DATA_FOR_UPDATE_IN_FORMULA_cell(state, planedAT) {
-        state.dataForUpdateInFormulaMetric = planedAT;
+
+    TOGGLE_PROCESSING_FORMULA_FOR_CATEGORY(state) {
+        state.isProcessingFormulaForCategory = !state.isProcessingFormulaForCategory;
+    },
+
+    ADD_PLANED_AT_FOR_UPDATE_FORMULA(state, planedAt) {
+        state.planedAtForUpdateInFormulaCell = planedAt;
+    },
+
+    TOGGLE_PROCESSING_FORMULA_FOR_CELL(state) {
+        state.isProcessingFormulaForCell = !state.isProcessingFormulaForCell;
+    },
+
+    ADD_COMPUTED_VALUE_FOR_UPDATED(state, {computedValue, planed, typeId}) {
+        // state.dataForUpdateComputedValues[`${planed}--${typeID}`] = {computedValue, planed, typeID}
+        state.dataForUpdateComputedValues.push({computedValue, planed, typeId});
+    },
+    ADD_METRIC_FOR_LIGHTING(state, metricId) {
+        state.metricIdForLighting = metricId
     },
 
     /*graph*/
@@ -167,9 +194,10 @@ export default {
     },
     MOVEMENT_METRICS(state, {movementMetricId, overMetricId, currentCategoryId}){
         for (let key in this.state.metricsGroups) {
-            if (key == currentCategoryId) {
-                let currentMetricIndex = null;
-                let overMetricIndex = null;
+            if (parseInt(key) === parseInt(currentCategoryId)) {
+                let currentMetricIndex  = null;
+                let overMetricIndex     = null;
+
                 for (let i = 0; i < this.state.metricsGroups[key].length; i++) {
                     if (this.state.metricsGroups[key][i].id === movementMetricId) {
                         currentMetricIndex = i;
@@ -218,80 +246,119 @@ export default {
         state.dataForSubmitForm = data;
     },
 
+    CHANGE_IS_SUBMITING(state) {
+        state.isSubmiting = !state.isSubmiting;
+    },
+
 
     /* working for data table*/
 
     REPLACE_METRIC_DATA(state, data) {
-        let metricFound     = null;
-        let changeCategory  = false;
-        let changePosition  = false;
-        let newCategory     = null;
-        let lastCategory    = null;
+        let metricFound         = getMetricFound(state, data.id);
+        let isChangeableCategory  = false;
+        let isChangeablePosition  = false;
+        let newCategory         = null;
+        let lastCategory        = null;
 
-        for (let key in state.metricsGroups) {
-            if (!metricFound ) {
-                metricFound = state.metricsGroups[key].find( metric => {
-                    return Number(metric.id) === Number(data.id);
-                })
-            }
-            if (metricFound) {
-                break;
-            }
-        }
+
         if (metricFound) {
-            lastCategory    = parseInt(metricFound.type_category_id);
-            newCategory     = parseInt(data.typeCategory.id);
+           lastCategory = setLastCategory(metricFound);
+           newCategory = setNewCategory(data);
+           isChangeableCategory = computedChangeableCategory(lastCategory, newCategory);
+           isChangeablePosition = computedChangeablePosition(metricFound, data);
+           updateDataMetricFound(metricFound, data);
 
-            changeCategory  = lastCategory !== newCategory;
-            changePosition  = parseInt(metricFound.position) !== parseInt(data.position);
-
-            metricFound.unit                = data.unit;
-            metricFound.name                = data.name;
-            metricFound.normal              = data.normal;
-            metricFound.comment             = data.comment;
-            metricFound.formula             = data.comment;
-            metricFound.is_hide             = data.isHide;
-            metricFound.minimal             = data.minimal;
-            metricFound.position            = data.position;
-            metricFound.is_group            = data.isGroup;
-            metricFound.is_around           = data.isAround;
-            metricFound.color_row           = data.colorRow;
-            metricFound.type_category_id    = data.typeCategory.id;
         }
 
-        if(changeCategory) {
-            state.metricsGroups[lastCategory] = state.metricsGroups[lastCategory].filter(metric => {
-                return metric.id !== metricFound.id;
+        if (isChangeableCategory) {
+            excludeMetricFromGroup(metricFound.id, lastCategory);
+        }
+
+        if ( state.metricsGroups[newCategory] !== undefined  && (isChangeablePosition || isChangeableCategory)) {
+
+            excludeMetricFromGroup(metricFound.id, newCategory);
+            processCategory(state.metricsGroups[newCategory])
+        }
+
+
+        function getMetricFound(state, metricId) {
+            let metricFound = null;
+            for (let key in state.metricsGroups) {
+                if (!metricFound ) {
+                    metricFound = state.metricsGroups[key].find( metric => {
+                        return Number(metric.id) === Number(metricId);
+                    })
+                }
+                if (metricFound) {
+                    break;
+                }
+            }
+            return metricFound;
+        }
+
+
+        function setLastCategory(metricFound) {
+            return parseInt(metricFound.type_category_id);
+        }
+
+        function setNewCategory(data) {
+            return  parseInt(data.typeCategory.id);
+        }
+
+        function computedChangeableCategory(lastCategory, newCategory) {
+            return lastCategory !== newCategory;
+        }
+        function computedChangeablePosition(metricFound, data) {
+            return parseInt(metricFound.position) !== parseInt(data.position);
+        }
+
+        function updateDataMetricFound(metricFound, data) {
+                metricFound.unit                = data.unit;
+                metricFound.name                = data.name;
+                metricFound.normal              = data.normal;
+                metricFound.comment             = data.comment;
+                metricFound.formula             = data.formula;
+                metricFound.is_hide             = data.isHide;
+                metricFound.minimal             = data.minimal;
+                metricFound.position            = data.position;
+                metricFound.is_group            = data.isGroup;
+                metricFound.is_around           = data.isAround;
+                metricFound.color_row           = data.colorRow;
+                metricFound.updated_at          = data.updatedAt;
+                metricFound.type_category_id    = data.typeCategory.id;
+        }
+
+
+        function excludeMetricFromGroup (metricIdFromExclude, categoryIdWhereExclude) {
+            state.metricsGroups[categoryIdWhereExclude] = state.metricsGroups[categoryIdWhereExclude].filter(metric => {
+                return parseInt(metric.id) !== parseInt(metricIdFromExclude);
             });
         }
 
-        if ( state.metricsGroups[newCategory] !== undefined  && (changePosition || changeCategory)) {
-            state.metricsGroups[newCategory] = state.metricsGroups[newCategory].filter(metric => {
-                return parseInt(metric.id) !== parseInt(metricFound.id);
-            })
+        function processCategory(processedCategory) {
+            if (processedCategory.length > metricFound.position) {
+                    for (let i = 0; i < processedCategory.length; i++) {
+                        const metric = processedCategory[i];
 
-            if (state.metricsGroups[newCategory].length > metricFound.position) {
-                for (let i = 0; i < state.metricsGroups[newCategory].length; i++) {
-                    let metric = state.metricsGroups[newCategory][i];
-
-                    if(metric.position >=  metricFound.position ) {
-                        let currentIndex = i;
-                        if (i === state.metricsGroups[newCategory].length) {
-                            currentIndex = state.metricsGroups[newCategory].length;
-                            metricFound.position = state.metricsGroups[newCategory].length;
+                        if (metric.position >=  metricFound.position ) {
+                            let currentIndex = i;
+                            if (i === processedCategory.length) {
+                                currentIndex = processedCategory.length;
+                                metricFound.position = processedCategory.length;
+                            }
+                            processedCategory.splice(currentIndex, 0, metricFound);
+                            break;
                         }
-                        state.metricsGroups[newCategory].splice(currentIndex, 0, metricFound);
-                        break;
                     }
+                } else {
+                    metricFound.position = processedCategory.length;
+                    processedCategory.splice(metricFound.position, 0, metricFound);
                 }
-            } else {
-                metricFound.position = state.metricsGroups[newCategory].length;
-                state.metricsGroups[newCategory].splice(metricFound.position, 0, metricFound);
-            }
-            state.metricsGroups[newCategory].map((metric, index) => {
-                metric.position = index.toString();
-            })
+                processedCategory.map((metric, index) => {
+                    metric.position = index.toString();
+                })
         }
+
 
     },
     REPLACE_WEEK_DATA(state, data) {
@@ -299,23 +366,33 @@ export default {
         if (state.mondaysData[data.categoryId][data.planed_at] !== undefined) {
             week = state.mondaysData[data.categoryId][data.planed_at];
         }
+
+        if (!week) { return false; }
+
+
         if(Object.keys(week).length) {
-            week.comment.userName = data.userName;
-            week.comment.comment = data.comment;
-            week.comment.planed = data.planed;
-            week.uname = data.userName;
+            week = createGeneralData(week, data);
         } else {
             week.comment = {};
-            week.comment.userName = data.userName;
-            week.comment.comment = data.comment;
-            week.comment.planed = data.planed;
-            week.uname = data.userName;
+            week = createGeneralData(week, data);
 
-            week.category_id = data.categoryId;
-            week.user_id = data.userId;
-            week.planed_at = data.planed;
-            week.id = data.id;
+            week.category_id    = data.categoryId;
+            week.user_id        = data.user_id;
+            week.planed_at      = data.planed_at;
+            week.id             = data.id;
+
             state.mondaysData[data.categoryId][data.planed_at] = week;
+        }
+
+        function createGeneralData (week, data) {
+            week.comment.userName   = data.comment.userName;
+            week.comment.comment    = data.comment.comment;
+            week.comment.planed     = data.planed_at;
+            week.comment.updated_at = data.updatedAt;
+            week.updated_at         = data.updatedAt;
+            week.uname              = data.comment.userName;
+
+            return week;
         }
     },
     REPLACE_CELL_DATA(state, data) {
@@ -336,30 +413,32 @@ export default {
          cell = metricFound.cells[data.planedAt];
         }
         if (cell) {
+            metricFound.cells[data.planedAt].id             = data.data.id;
+            metricFound.cells[data.planedAt].value          = data.data.value;
+            metricFound.cells[data.planedAt].uname          = data.userName;
+            metricFound.cells[data.planedAt].comment        = data.data.comment;
+            metricFound.cells[data.planedAt].updated_at     = data.data.updatedAt;
             metricFound.cells[data.planedAt].computed_value = data.data.computedValue;
-            metricFound.cells[data.planedAt].id = data.data.id;
-            metricFound.cells[data.planedAt].value = data.data.value;
-            metricFound.cells[data.planedAt].comment = data.data.comment;
-            metricFound.cells[data.planedAt].uname = data.userName;
         }
     },
     CREATE_NEW_METRIC(state, data) {
-        let newMetric = {};
-        let categoryId = data.typeCategory.id;
+        const categoryId = data.typeCategory.id;
+        const newMetric = {};
 
-        newMetric.color_row        = data.colorRow;
         newMetric.name             = data.name;
+        newMetric.unit             = data.unit;
+        newMetric.cells            = {};
+        newMetric.normal           = data.normal;
         newMetric.comment          = data.comment;
         newMetric.formula          = data.comment;
-        newMetric.is_around        = data.isAround;
-        newMetric.is_group         = data.isGroup;
         newMetric.is_hide          = data.isHide;
         newMetric.minimal          = data.minimal;
-        newMetric.normal           = data.normal;
+        newMetric.is_group         = data.isGroup;
         newMetric.position         = data.position;
-        newMetric.unit             = data.unit;
+        newMetric.color_row        = data.colorRow;
+        newMetric.is_around        = data.isAround;
+        newMetric.updated_at       = data.updatedAt;
         newMetric.type_category_id = data.typeCategory.id;
-        newMetric.cells = {};
 
 
         if (state.metricsGroups[categoryId] === undefined) {
@@ -378,7 +457,7 @@ export default {
         })
 
         for (let i = 0; i < state.metricsGroups[categoryId].length; i++) {
-            let metric = state.metricsGroups[categoryId][i];
+            const metric = state.metricsGroups[categoryId][i];
 
             if(parseInt(metric.position) >=  parseInt(newMetric.position)) {
                 let currentIndex = i;

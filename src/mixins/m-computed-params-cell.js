@@ -1,9 +1,9 @@
 export default {
     methods: {
         updateColor() {
-            let localMinimal = null;
-            let localNormal = null;
-            let localValueOutput = null;
+            let localMinimal        = null;
+            let localNormal         = null;
+            let localValueOutput    = null;
             if (this.isDateTime(this.minimal) && this.isDateTime(this.normal) && this.isDateTime(this.defineValueInInputData)) {
                 localMinimal = this.getDateTime(this.minimal);
                 localNormal = this.getDateTime(this.normal);
@@ -63,10 +63,8 @@ export default {
 
         isDateTime(value){
             if (value === false || value === '') {return false}
-            if (value.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null) {
-                return true;
-            }
-            return false;
+            return  value.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null;
+
         },
 
         around(value) {

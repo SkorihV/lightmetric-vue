@@ -21,16 +21,10 @@ export default {
   components: {
     vCommentTrigger
   },
-  mounted() {
-    if (this.data !== null) {
-      this.isDataCell = true;
-    }
-  },
   props: {
     data: {
       type: Object,
       default: null,
-      require: false
     },
     title: {
       type: String,
@@ -38,12 +32,10 @@ export default {
     },
     categoryId: {
       type: [String, Number, null],
-      require: false,
       default: null
     },
     planedAt: {
       type: [String, null],
-      require: false,
       default: null
     },
     classes: {
@@ -54,6 +46,11 @@ export default {
   data() {
     return {
       isDataCell: false
+    }
+  },
+  mounted() {
+    if (this.data !== null) {
+      this.isDataCell = true;
     }
   },
   methods: {
@@ -75,7 +72,7 @@ export default {
       }
     },
     handlerClickComment() {
-      this.SET_DATA_FOR_COMMENT({userName: this.data.comment.userName, commentText: this.data.comment.comment, dateTime: this.data.comment.planed});
+      this.SET_DATA_FOR_COMMENT({userName: this.data.comment.userName, commentText: this.data.comment.comment, dateTime: this.data.updated_at});
     },
   },
   watch: {
@@ -87,16 +84,6 @@ export default {
       }
     }
   },
-  // beforeUpdate() {
-  //   console.log(this.data, 1)
-  //   console.log(this.isDataCell, 2)
-  //   if (this.data !== null) {
-  //     this.isDataCell = true;
-  //   } else {
-  //     this.isDataCell = false;
-  //   }
-  //   console.log(this.isDataCell, 3)
-  // }
 
 }
 </script>

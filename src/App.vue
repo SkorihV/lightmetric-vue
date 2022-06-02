@@ -1,5 +1,6 @@
 <template>
-  <div class="lightTableBox">
+    <v-filter-wrapper />
+  <div class="lightTableBox" ref="generalWrapper">
     <keep-alive>
       <v-formula-input-block></v-formula-input-block>
     </keep-alive>
@@ -8,9 +9,9 @@
           :key="index"
           :metrics="table"
       ></v-table>
-      <v-control-panel></v-control-panel>
+      <v-control-panel />
   </div>
-  <v-modal></v-modal>
+  <v-modal />
 
 </template>
 
@@ -20,6 +21,7 @@ import vTable from "@/components/v-table"
 import vControlPanel from '@/components/v-control-panel'
 import vFormulaInputBlock from '@/components/v-formula-input-block'
 import vModal from '@/components/v-modal'
+import vFilterWrapper from '@/components/v-filter-wrapper'
 
 export default {
   name: 'app-light-metric',
@@ -28,6 +30,26 @@ export default {
     vControlPanel,
     vFormulaInputBlock,
     vModal,
+    vFilterWrapper
+  },
+  computed: {
+    ...mapGetters([
+        'tablesList',
+        'getDataForUpdatedComputedValue'
+    ])
+  },
+  methods:{
+    ...mapActions([
+        'INIT_TRUE_PATH',
+        'FETCH_DATA_METRIC',
+        'UPDATED_COMPUTED_VALUES'
+    ]),
+    initStorage() {
+      const storage = JSON.parse(localStorage.getItem('group'));
+      if (!storage) {
+        localStorage.setItem('group', JSON.stringify({ group: [] }));
+      }
+    },
   },
   mounted() {
     this.initStorage();
@@ -36,25 +58,26 @@ export default {
     this.FETCH_DATA_METRIC();
 
   },
-  computed: {
-    ...mapGetters([
-        'tablesList',
-        'categoryNameById'
-    ])
-  },
-  methods:{
-    ...mapActions([
-      'INIT_TRUE_PATH',
-      'FETCH_DATA_METRIC'
-    ]),
-    initStorage() {
-      let storage = JSON.parse(localStorage.getItem('group'));
-      if (!storage) {
-        localStorage.setItem('group', JSON.stringify({ group: [] }));
-        storage = JSON.parse(localStorage.getItem('group'));
+  beforeUpdate() {
+
+
+    setTimeout(() => {
+      console.log('beforeUpdate ++++++++++')
+      if (this.getDataForUpdatedComputedValue.length) {
+        this.UPDATED_COMPUTED_VALUES(this.getDataForUpdatedComputedValue);
       }
-    },
-  }
+    }, 1000)
+  },
+  beforeMount() {
+    setTimeout(() => {
+      console.log('beforeMount ++++++++++')
+      document.querySelector('.lightTableBox').scrollLeft = this.$refs.generalWrapper.scrollWidth;
+
+      if (this.getDataForUpdatedComputedValue.length) {
+        this.UPDATED_COMPUTED_VALUES(this.getDataForUpdatedComputedValue);
+      }
+    }, 1000)
+  },
 }
 </script>
 

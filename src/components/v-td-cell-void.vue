@@ -6,7 +6,7 @@
   >
     <div class="cell__content">
       <div v-if="title" class="cell__title">{{title}}</div>
-      <div v-if="unit && title" class="cell__unit">&nbsp{{unit}}</div>
+      <div v-if="unit && title" class="cell__unit">&nbsp;{{unit}}</div>
     </div>
   </td>
 </template>
@@ -18,15 +18,12 @@ export default {
     classes: {
       type: String,
       default: '',
-      require: false
     },
     title: {
       type: [String, Number],
-      require: false
     },
     style: {
       type: Object,
-      require: false,
     },
     unit: {
       type: [String, null],
@@ -36,7 +33,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 
 .cell {
   padding: 3px;
@@ -60,6 +57,7 @@ export default {
     left: 0;
     z-index: 5;
     width: 50px;
+    min-width: 50px;
     display: flex;
   }
   &__minimal {

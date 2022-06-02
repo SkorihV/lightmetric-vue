@@ -2,6 +2,20 @@ export default {
     tablesList: (state) => {
         return state.metricsGroups;
     },
+    getCategoriesList: (state) => {
+        return state.categories;
+    },
+
+    getDateEnd: (state) => {
+        return state.dateEnd;
+    },
+    getDateStart: (state) => {
+        return state.dateStart;
+    },
+    getDiscussedWeek: (state) => {
+      return state.discussedWeek;
+    },
+
     categoryNameById: (state) => (id) => {
         return state.categories.find(category => category.id === id).name;
     },
@@ -39,7 +53,6 @@ export default {
     showInputBlockForWorkingFormula: (state) => {
         return state.modeWorksToFormula;
     },
-
     getMetricForFormula: (state) => {
         return state.metricForFormulaInput;
     },
@@ -49,21 +62,21 @@ export default {
 
 
 
-
-
     /*Геттеры для работы с формулами*/
+
     allCellsInMetric: (state) => (metricId) => {
         let metricFound = null;
-            for (let key in state.metricsGroups) {
-                if (!metricFound ) {
-                     metricFound = state.metricsGroups[key].find( metric => {
-                        return Number(metric.id) === Number(metricId);
-                    })
-                }
-                if (metricFound) {
-                    break;
-                }
+
+        for (let key in state.metricsGroups) {
+            if (!metricFound ) {
+                 metricFound = state.metricsGroups[key].find( metric => {
+                    return Number(metric.id) === Number(metricId);
+                })
             }
+            if (metricFound) {
+                break;
+            }
+        }
         if (metricFound) {
             return metricFound.cells;
         } else {
@@ -80,8 +93,13 @@ export default {
         }
         return metcrics;
     },
+
+    getMetricForLighting: (state) => {
+        return state.metricIdForLighting;
+    },
+
     cellForId: (state) => (cellId) => {
-        if (!cellId) {return null; }
+        if (!cellId) { return null; }
         let cell = null;
 
         for (let key in state.metricsGroups) {
@@ -101,6 +119,7 @@ export default {
         }
         return cell;
     },
+
     metricForId: (state) => (metricId) =>  {
         let metric = null;
         for (let key in state.metricsGroups) {
@@ -117,14 +136,29 @@ export default {
         }
         return metric;
     },
-    dataForUpdateInFormulaCell: (state) => {
-        return state.dataForUpdateInFormulaCell;
+
+    getPlanedAtForUpdateInFormulaCell: (state) => {
+        return state.planedAtForUpdateInFormulaCell;
     },
-    dataForUpdateInFormulaMetric: (state) => {
-        return state.dataForUpdateInFormulaMetric;
+
+    getDataForUpdateInFormulaMetric: (state) => {
+        return state.categoryIdForUpdateInFormulaMetric;
     },
+
     dataResetCheckboxesStat: (state) => {
         return state.resetCheckboxesStat;
+    },
+
+    getDataForUpdatedComputedValue: (state) => {
+      return state.dataForUpdateComputedValues;
+    },
+
+
+    isProcessingFormulaForCategory: (state) => {
+        return state.isProcessingFormulaForCategory;
+    },
+    isProcessingFormulaForCell: (state) => {
+        return state.isProcessingFormulaForCell;
     },
 
 
@@ -146,6 +180,9 @@ export default {
     },
     getDataForSubmitForm: (state) => {
        return state.dataForSubmitForm;
+    },
+    getIsSubmiting: (state) => {
+        return state.isSubmiting;
     },
 
     /*stat*/

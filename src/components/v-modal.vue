@@ -36,9 +36,6 @@ import vCommentElement from './v-comment-element'
 
 export default {
   name: "v-modal",
-  mounted() {
-    this.addEventDragAndDropForModal()
-  },
   mixins: [mDragEndDropForModal],
   components: {
     vCommentElement
@@ -48,25 +45,28 @@ export default {
       chart: null
     }
   },
+  mounted() {
+    this.addEventDragAndDropForModal()
+  },
   methods: {
     ...mapActions([
-        'TOGGLE_SHOW_HIDE_MODAL',
+        'SHOW_MODAL',
         'RESET_MODAL',
         'SUBMIT_FORM',
         'DELETE_DATA',
         'DELETE_COMMENT_FOR_CELL'
     ]),
     submitData(e) {
-      let formData = new FormData(e.target)
+      const formData = new FormData(e.target)
       this.SUBMIT_FORM({formData:formData, dataForSubmit: this.getDataForSubmitForm})
     },
     handlerDelete(e) {
-      let t = e.target;
-      if (t.closest('.delete a')) {
-        let deleteElement = t.closest('.delete a');
+      const t = e.target;
+      const deleteElement = t.closest('.delete a');
+
+      if (deleteElement) {
         e.preventDefault();
         this.DELETE_DATA({dataUrl: deleteElement.href, dataType: this.getDataForSubmitForm});
-
       }
 
       if(t.closest('.delete-comment-cell a')) {
@@ -143,6 +143,7 @@ export default {
         'displayingComment',
         'dataForComment',
         'getDataForSubmitForm',
+        'getIsSubmiting'
     ])
   },
   watch: {
@@ -158,6 +159,16 @@ export default {
         }
       },
       deep: true
+    },
+    getIsSubmiting() {
+      const form = this.$refs.modal.querySelector('form');
+      if (form) {
+        const formData = new FormData(form)
+        console.log(form)
+        console.log(formData)
+        console.log(this.getDataForSubmitForm)
+        this.SUBMIT_FORM({formData:formData, dataForSubmit: this.getDataForSubmitForm})
+      }
     }
   }
 }
@@ -225,6 +236,16 @@ export default {
         &.visible {
           display:flex;
         }
+      }
+    }
+
+    form[name='week_cell_form'] {
+      .editValue {
+        display: none;
+      }
+      ~.delete-comment-cell,
+      ~.delete.delete-hide{
+        display: none;
       }
     }
 

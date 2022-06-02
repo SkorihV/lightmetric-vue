@@ -2,7 +2,13 @@
     <tr
         v-if="!metric.isHideLikeGroup || isHide"
         class="table__tr"
-        :class="{'is-group': isGroup, 'is-hide': isHide, 'is-show': isShow, 'workInFormula':getMetricForFormula === metric.id}"
+        :class="{
+          'is-group': isGroup,
+          'is-hide': isHide,
+          'is-show': isShow,
+          'workInFormula':getMetricForFormula === metric.id,
+          'lighting': getMetricForLighting === metric.id
+        }"
         @click.ctrl="addMetricAlias"
         @click="setIdForFormulaEdit"
         :draggable="modeDragAndDrops"
@@ -15,7 +21,7 @@
     >
       <v-td-cell-void
           classes="gray-color cell__position"
-          :title="metric.type_category_id + '-' + metric.position"
+          :title="`${metric.type_category_id}-${metric.position}`"
       ></v-td-cell-void>
 
       <v-td-cell-main
@@ -30,7 +36,6 @@
           :title="metric.minimal ? metric.minimal : ''"
           :unit="metric.unit"
           :categoriId="metric.type_category_id"
-
       ></v-td-cell-void>
 
       <v-td-cell-void
@@ -53,6 +58,7 @@
           :unit="metric.unit"
           :metricId="metric.id"
           :isGroup="isGroup"
+          :categoryId="Number(metric.type_category_id)"
       >
       </v-td-cell>
     </tr>
@@ -64,19 +70,19 @@ import vTdCell from './v-td-cell'
 import vTdCellMain from './v-td-cell-main'
 import vTdCellVoid from './v-td-cell-void'
 import {mapActions, mapGetters} from "vuex";
-import VTdCellVoid from "@/components/v-td-cell-void";
+
 
 export default {
   name: "v-tr",
   components: {
-    VTdCellVoid,
+    vTdCellVoid,
     vTdCell,
     vTdCellMain
   },
   props: {
     metric: {
       type: Object,
-      require: true
+      required: true
     }
   },
   data() {
@@ -90,20 +96,25 @@ export default {
         'SET_CURRENT_METRIC_FOR_DRAG_AND_DROP',
         'SET_CURRENT_METRIC_FOR_OVER_DRAG_AND_DROP',
         'MOVE_METRIC',
-        'UPDATE_POSITION_FOR_METRIC_GROUP'
+        'UPDATE_POSITION_FOR_METRIC_GROUP',
+        'SET_CATEGORY_ID_FOR_UPDATE_FORMULA'
     ]),
     addMetricAlias() {
       if (!this.showInputBlockForWorkingFormula && !this.getMetricForFormula) {
         return false;
       }
       let metric = this.metricForId(this.getMetricForFormula)
+      console.log(metric)
       metric.formula += ` $${this.metric.id}$`;
+      console.log(metric)
+      console.log( ` $${this.metric.id}$`)
     },
     setIdForFormulaEdit(e) {
       if (!this.showInputBlockForWorkingFormula || e.ctrlKey) {
         return false;
       }
       this.SET_ID_METRIC_FOR_FORMULA_INPUT(this.metric.id);
+      this.SET_CATEGORY_ID_FOR_UPDATE_FORMULA(this.metric.type_category_id);
     },
     dragAndDropRowStart(e) {
       if (!this.modeDragAndDrops) {
@@ -124,17 +135,21 @@ export default {
           if (!metricOverDragAndDrop) {return false}
           if (metricOverDragAndDrop.type_category_id === this.metric.type_category_id) {
             this.MOVE_METRIC({
-              movementMetricId:this.getCurrentIdMetricForDragAndDrop,
+              movementMetricId: this.getCurrentIdMetricForDragAndDrop,
               overMetricId:  this.getCurrentIdMetricForOverDragAndDrop,
               currentCategoryId: metricOverDragAndDrop.type_category_id  })
           }
         }
     },
     dragAndDropRowOver() {
-      if (this.getCurrentIdMetricForDragAndDrop !== this.metric.id && !this.showImaginaryRow ) {
-        this.showImaginaryRow = true;
-        this.SET_CURRENT_METRIC_FOR_OVER_DRAG_AND_DROP(this.metric.id)
-      }
+
+        if (this.getCurrentIdMetricForDragAndDrop !== this.metric.id && !this.showImaginaryRow ) {
+          this.showImaginaryRow = true;
+          this.SET_CURRENT_METRIC_FOR_OVER_DRAG_AND_DROP(this.metric.id)
+          setTimeout(() => {
+            this.showImaginaryRow = false;
+          },2000)
+        }
     },
     dragAndDropRowLeave() {
       this.showImaginaryRow = false;
@@ -149,7 +164,8 @@ export default {
         'metricForId',
         'modeDragAndDrops',
         'getCurrentIdMetricForDragAndDrop',
-        'getCurrentIdMetricForOverDragAndDrop'
+        'getCurrentIdMetricForOverDragAndDrop',
+        'getMetricForLighting'
     ]),
     isGroup() {
       return Number(this.metric.is_group) === 1;
@@ -160,7 +176,7 @@ export default {
     isShow() {
       return this.isHide === true && this.showHideMetric === true;
     }
-  }
+  },
 }
 </script>
 
@@ -189,6 +205,10 @@ export default {
   }
   &.workInFormula {
     border-bottom: 3px #367fa9 solid;
+  }
+
+  &.lighting {
+    border: 2px dashed #a97171;
   }
 }
 

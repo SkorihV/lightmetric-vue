@@ -51,7 +51,7 @@
         title="Сбросить галочки"
         type="button"
         class="btn btn-danger control-panel__button"
-        @click="TOGGLE_HIDE_CHECKBOXES_FOR_STAT(); TOGGLE_SHOW_HIDE_MODAL(false);"
+        @click="dropCheckboxes"
     ><i class="fas fa-times"></i></button>
     <button
         title="Окно со средним значением"
@@ -81,15 +81,15 @@ export default {
         'TOGGLE_SHOW_HIDE_FORMULA',
         'TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA',
         'TOGGLE_SHOW_HIDE_METRIC',
-        'REMOVE_ALL_DATA_FOR_STAT_GRAPHS',
-        'TOGGLE_SHOW_HIDE_MODAL',
+        'SHOW_MODAL',
         'TOGGLE_MODE_DRAG_AND_DROP',
         'FETCH_METRIC_FORM',
-        'SET_DATA_FOR_SUBMIT_FORM'
+        'SET_DATA_FOR_SUBMIT_FORM',
+        'RESET_MODAL'
     ]),
     showStat() {
       if(this.statGraph.dataCells.length) {
-        this.TOGGLE_SHOW_HIDE_MODAL(true)
+        this.SHOW_MODAL();
       }
     },
     newMetric() {
@@ -98,6 +98,10 @@ export default {
             this.SET_DATA_FOR_SUBMIT_FORM({formType: 'metric', metricId: null})
           })
 
+    },
+    dropCheckboxes() {
+      this.TOGGLE_HIDE_CHECKBOXES_FOR_STAT();
+      this.RESET_MODAL();
     }
   },
   computed: {

@@ -3,21 +3,25 @@
       class="formula-block"
       v-if="showInputBlockForWorkingFormula && modelValue != null"
   >
+    <div v-if="metricNameForPrompt.length" id="prompt-alias-name">
+     {{metricNameForPrompt}}
+    </div>
     <form
         ref="form"
         action="#"
-        @submit.prevent
+        @submit.prevent="saveFormula"
     >
       <input
           class="formula-block__input"
           name="formula_input"
           autocomplete="off"
           v-model.lazy="modelValue.formula"
+          @click="getCurrentPosition"
+          @keydown.esc="closeInput"
       >
       <button
           type="submit"
           class="btn btn-success edit-mod-toggle formula-block__btn"
-          @click.stop="saveFormula"
       >
         <i class="far fa-check-square"></i>
       </button>
@@ -30,22 +34,51 @@ import {mapActions, mapGetters, mapState} from "vuex";
 
 export default {
   name: "v-formula-input-block",
-  props: {
-  },
   data() {
     return {
-      modelValue: null
+      modelValue: null,
+      metricNameForPrompt: '',
     }
   },
   methods: {
     ...mapActions([
         'SAVING_FORMULA_FOR_METRIC',
-        'TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA'
+        'TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA',
+        'SET_METRIC_ID_FOR_LIGHTING',
     ]),
     saveFormula() {
-      let formData = new FormData(this.$refs.form);
+      const formData = new FormData(this.$refs.form);
 
       this.SAVING_FORMULA_FOR_METRIC({formData, metricId: this.modelValue.id});
+      this.SET_METRIC_ID_FOR_LIGHTING(null);
+      this.metricNameForPrompt = '';
+      this.TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA();
+    },
+
+    getCurrentPosition (e) {
+      this.getAliasForInput(e.target.value, e.target.selectionStart)
+    },
+    getAliasForInput(str, pos) {
+      str = String(str);
+      pos = Number(pos) >>> 0;
+
+      const left = str.slice(0, pos).lastIndexOf('$');
+      const right = str.slice(pos).search(/\${1}/);
+
+      let alias = str.slice(left, right + pos + 1);
+
+      const isAlias = (alias.search(/\$[0-9]+\$/) >= 0);
+      if (!isAlias){
+        this.metricNameForPrompt = '';
+        this.SET_METRIC_ID_FOR_LIGHTING(null);
+        return;
+      }
+      alias = alias.match(/[0-9]+/)[0]
+      this.SET_METRIC_ID_FOR_LIGHTING(alias.toString());
+      this.metricNameForPrompt = this.metricForId(alias).name;
+    },
+    closeInput() {
+      this.SET_METRIC_ID_FOR_LIGHTING(null);
       this.TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA();
     }
   },
@@ -53,9 +86,9 @@ export default {
     ...mapGetters([
         'showInputBlockForWorkingFormula',
         'getMetricForFormula',
-        'metricForId'
+        'metricForId',
     ]),
-    ...mapState([]),
+
   },
   watch: {
     getMetricForFormula() {
@@ -93,6 +126,17 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  #prompt-alias-name {
+    position: absolute;
+    bottom: calc(100% - 1px);
+    padding: 5px;
+    border-radius: 3px;
+    background: #dbebea;
+    border-left: 1px dashed #a97171;
+    border-right: 1px dashed #a97171;
+    border-top: 1px dashed #a97171;
   }
 }
 

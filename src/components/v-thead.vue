@@ -18,9 +18,10 @@
           title="Норм"
       ></v-th>
       <v-th
-          v-for="mondayDate in mondaysList"
+          v-for="(mondayDate, index) in mondaysList"
           classes="table__th "
           :title="mondayDate"
+          :key="index"
           :data="mondayDataByIdAndPlanedAt({id: categoryId, planed: mondayDate})"
           :planedAt="mondayDate"
           :categoryId="categoryId"
@@ -41,7 +42,7 @@ export default {
   props: {
     categoryId: {
       type: [String, Number],
-      require: true
+      required: true
     }
   },
   computed: {

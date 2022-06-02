@@ -5,15 +5,16 @@
             :categoryId="categoryId"
         ></v-thead>
           <v-tr
-              v-for="metric in metrics"
+              v-for="(metric, index) in metrics"
               :metric="metric"
+              :key="index"
           >
           </v-tr>
       </table>
 </template>
 
 <script>
-import {mapGetters, mapState} from 'vuex'
+import {mapActions, mapGetters, mapState} from 'vuex'
 import vTr from './v-tr'
 import vThead from './v-thead'
 
@@ -30,15 +31,14 @@ export default {
       default: []
     }
   },
-  mounted() {
-  },
-  data() {
-    return {}
+  methods: {
+    ...mapActions(['UPDATED_COMPUTED_VALUES'])
   },
   computed: {
     ...mapGetters([
         'categoryNameById',
         'mondaysDataByCategoryId',
+        'getDataForUpdatedComputedValue'
     ]),
     categoryId() {
       if (this.metrics.length) {
@@ -52,7 +52,7 @@ export default {
     mondaysData() {
       return this.mondaysDataByCategoryId(this.categoryId)
     },
-  }
+  },
 
 }
 </script>

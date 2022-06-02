@@ -14,8 +14,8 @@ export default {
                         return false;
                     }
                     try {
-
                         let resultData = this.recognizeData(resultValueString);
+
 
                         if (this.data.computed_value !== resultData) {
                             this.SET_COMPUTED_VALUE({
@@ -23,7 +23,16 @@ export default {
                                 planedAt: this.data.planed_at,
                                 value: resultData
                             });
+
+                            if (Number(this.data.value) !== Number(resultData)) {
+                                this.SET_DATA_FOR_UPDATING_COMPUTED_VALUE({
+                                    computedValue: resultData,
+                                    planed: this.data.planed_at,
+                                    typeId: this.data.type_id
+                                })
+                            }
                         }
+
 
 
                         // if (resultData.replace(/ /g, "") !== '' && resultData.replace(/ /g, "") !== cell.computedValue) {
@@ -46,13 +55,7 @@ export default {
                     });
                 }
 
-                    // if (resultData.replace(/ /g, "") !== '' && resultData.replace(/ /g, "") !== cell.computedValue) {
-                    //     this.parentTable.model.controller.fetch.updateComputedValue(cell.computedValueForDB);
-                    // }
-
-
             }
-            // this.updateUnitAndColorInCells();
         },
 
         getArrayParams(metricId) {

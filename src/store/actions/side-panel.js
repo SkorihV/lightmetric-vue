@@ -21,15 +21,7 @@ export default {
     TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA({commit}) {
         commit('SHOW_HIDE_INPUT_BLOCK')
     },
-    TOGGLE_SHOW_HIDE_MODAL({commit}, flag ) {
-        if(flag) {
-            commit('VISIBILITY_MODAL', true);
-        } else {
-            commit('VISIBILITY_MODAL', false);
-            commit('REMOVE_ALL_STAT_GRAPH');
-            commit('RESET_CHECKBOXES_STAT');
-            commit('REMOVE_HTML_FOR_MODAL');
-            commit('EDIT_MODE_TOGGLE', false)
-        }
+    SHOW_MODAL({commit}) {
+       commit('VISIBILITY_MODAL', true);
     },
 }

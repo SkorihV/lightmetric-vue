@@ -1,9 +1,22 @@
 import axios from "axios";
 
 export default {
-    async FETCH_DATA_METRIC({commit, state}) {
-        let search = '';
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param searchUrl
+   * @returns {Promise<T>}
+   * @constructor
+   */
+    async FETCH_DATA_METRIC({commit, state}, searchUrl = '') {
+      let search = '';
+      if (searchUrl) {
+        search = searchUrl;
+      } else {
         search = window.location.search;
+      }
         if(state.isLocal) {
             return await axios.get(`http://localhost:3000/data${search}`)
                 .then((data) => {
@@ -12,7 +25,7 @@ export default {
                     commit('PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL');
                 })
         } else {
-            return await axios.get(`/lightmetric_vue/json_list${search}`)
+            return await axios.get(`${state.urlsForFetch.dataList}${search}`)
                 .then((data) => {
                     commit('SET_DATA_METRIC', data.data);
                 }).then(() => {
@@ -20,10 +33,20 @@ export default {
                 })
         }
     },
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param metricGroupId
+   * @returns {boolean|Promise<T | void>}
+   * @constructor
+   */
     UPDATE_POSITION_FOR_METRIC_GROUP({commit, state}, metricGroupId) {
         if (state.isLocal) {return false;}
-        let request = '/lightmetric_vue/type/updatePositionMetrics';
+
         let listIds = '';
+
         for (let key in state.metricsGroups) {
            if (key === metricGroupId) {
                let group = state.metricsGroups[key];
@@ -42,7 +65,7 @@ export default {
             return false;
         }
 
-        return axios.put(`${request}?metric_id_str=${listIds}`)
+        return axios.put(`${state.urlsForFetch.updatePosition}?metric_id_str=${listIds}`)
             .then(response => {
                 if (response) {
                     console.log('Ok');
@@ -50,9 +73,17 @@ export default {
             })
             .catch((err) => console.error(err));
     },
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param metricID
+   * @constructor
+   */
     FETCH_METRIC_FORM({commit, state}, metricID = '') {
         let search = '';
-        let request = '/lightmetric_vue/type/form'
+
         if(metricID) {
             search = `?metric_id=${metricID}`;
         }
@@ -66,20 +97,28 @@ export default {
 
 
         } else {
-            axios.get(`${request}${search}`)
+            axios.get(`${state.urlsForFetch.metricForm}${search}`)
                 .then(response => {
                     commit('PUT_HTML_FOR_MODAL', response.data);
                     commit('VISIBILITY_MODAL', true);
                 })
         }
     },
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param planedAt
+   * @param categoryId
+   * @returns {boolean}
+   * @constructor
+   */
     FETCH_WEEK_FORM({commit, state}, {planedAt, categoryId}) {
         if (!planedAt || !categoryId) {
             return false;
         }
-
-        let request = '/lightmetric_vue/week/form'
-        let search = `?planed_at=${planedAt}&category_id=${categoryId}`;
+        const search = `?planed_at=${planedAt}&category_id=${categoryId}`;
 
         if (state.isLocal) {
             axios.get(`http://localhost:3000/data${search}`)
@@ -89,20 +128,29 @@ export default {
                 })
 
         } else {
-            axios.get(`${request}${search}`)
+            axios.get(`${state.urlsForFetch.weekForm}${search}`)
                 .then(response => {
                     commit('PUT_HTML_FOR_MODAL', response.data);
                     commit('VISIBILITY_MODAL', true);
                 })
         }
     },
-    FETCH_CELL_FORM({commit, state}, {metricId, planedAt}) {
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param metricId
+   * @param planedAt
+   * @returns {boolean}
+   * @constructor
+   */
+    FETCH_CELL_FORM_CONTEXT({commit, state}, {metricId, planedAt}) {
         if (!metricId || !planedAt) {
             return false;
         }
 
-        let request = '/lightmetric_vue/weekcell/form'
-        let search = `?planed_at=${planedAt}&metric_id=${metricId}`;
+        const search = `?planed_at=${planedAt}&metric_id=${metricId}`;
 
         if (state.isLocal) {
             axios.get(`http://localhost:3000/data${search}`)
@@ -112,45 +160,117 @@ export default {
                 })
 
         } else {
-            axios.get(`${request}${search}`)
+            axios.get(`${state.urlsForFetch.cellForm}${search}`)
                 .then(response => {
                     commit('PUT_HTML_FOR_MODAL', response.data);
                     commit('VISIBILITY_MODAL', true);
                 })
         }
     },
-   async SAVING_FORMULA_FOR_METRIC({commit}, {formData, metricId}){
-        let request = `/lightmetric_vue/typeformulaAdd?id=${metricId}`
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param dispatch
+   * @param metricId
+   * @param planedAt
+   * @param newValue
+   * @returns {boolean}
+   * @constructor
+   */
+  FETCH_CELL_FORM_VALUE({commit, state, dispatch}, {metricId, planedAt, newValue}) {
+    if (!metricId || !planedAt) {
+      return false;
+    }
+
+    const search = `?planed_at=${planedAt}&metric_id=${metricId}`;
+
+    if (state.isLocal) {
+      axios.get(`http://localhost:3000/data${search}`)
+          .then(response => {
+            commit('PUT_HTML_FOR_MODAL', response.data.form_cell);
+          })
+
+    } else {
+      axios.get(`${state.urlsForFetch.cellForm}${search}`)
+          .then(response => {
+            commit('PUT_HTML_FOR_MODAL', response.data);
+          })
+          .then(() => {
+            const valueInput = document.querySelector('#week_cell_form_value');
+            if (valueInput) {
+              valueInput.value = newValue;
+              return true;
+            }
+          })
+          .then(() => {
+            dispatch('TOGGLE_IS_SUBMITING');
+          })
+          .then(() => {
+            dispatch('INIT_PROCESSING_FORMULA_FOR_CELL');
+          })
+    }
+  },
+
+  /**
+   *
+   * @param commit
+   * @param state
+   * @param dispatch
+   * @param formData
+   * @param metricId
+   * @returns {Promise<void>}
+   * @constructor
+   */
+   async SAVING_FORMULA_FOR_METRIC({commit, state, dispatch}, {formData, metricId}){
+        const request = `${state.urlsForFetch.savingMetricFormula}?id=${metricId}`
 
        await fetch(request, {
            method: 'POST',
            body: formData
         })
        .then(response => {
-           console.log(response.status)
+         dispatch('INIT_PROCESSING_FORMULA_FOR_CATEGORY');
+           console.log(response.status, 'INIT_PROCESSING_FORMULA_FOR_CATEGORY')
        })
 
     },
 
+  /**
+   *
+   * @param dispatch
+   * @param data
+   * @constructor
+   */
     SUBMIT_FORM({dispatch}, data) {
-        if (data.dataForSubmit.formType === 'metric') {
+        if (data.dataForSubmit?.formType === 'metric') {
             dispatch('SUBMIT_FORM_METRIC', data)
-        } else if (data.dataForSubmit.formType === 'cell') {
+        } else if (data.dataForSubmit?.formType === 'cell') {
             dispatch('SUBMIT_FORM_CELL', data)
-        } else if (data.dataForSubmit.formType === 'week') {
+        } else if (data.dataForSubmit?.formType === 'week') {
             dispatch('SUBMIT_FORM_WEEK', data)
         }
     },
 
-
-    async SUBMIT_FORM_METRIC({commit, dispatch}, {formData, dataForSubmit}) {
-        let metricId = dataForSubmit.metricId;
-        let responseUrl = `/lightmetric_vue/type/form`
+  /**
+   *
+   * @param commit
+   * @param dispatch
+   * @param state
+   * @param formData
+   * @param dataForSubmit
+   * @returns {Promise<void>}
+   * @constructor
+   */
+    async SUBMIT_FORM_METRIC({commit, dispatch, state}, {formData, dataForSubmit}) {
+        const metricId = dataForSubmit.metricId;
+        let responseUrl = `${state.urlsForFetch.metricForm}`
 
         if (metricId) {
             responseUrl += `?metric_id=${metricId}`;
         }
-        let response = await fetch(responseUrl, {
+        await fetch(responseUrl, {
             method: 'POST',
             body: formData
         })
@@ -176,11 +296,22 @@ export default {
             .catch((err) => console.error(err));
     },
 
-    async SUBMIT_FORM_WEEK({commit, dispatch}, {formData, dataForSubmit}) {
-        let categoryId = dataForSubmit.categoryId;
-        let planet_at = dataForSubmit.planed_at
-        let responseUrl = `/lightmetric_vue/week/form?planed_at=${planet_at}&category_id=${categoryId}`
-        let response = await fetch(responseUrl, {
+  /**
+   *
+   * @param commit
+   * @param dispatch
+   * @param state
+   * @param formData
+   * @param dataForSubmit
+   * @returns {Promise<void>}
+   * @constructor
+   */
+    async SUBMIT_FORM_WEEK({commit, dispatch, state}, {formData, dataForSubmit}) {
+        const categoryId    = dataForSubmit.categoryId;
+        const planet_at     = dataForSubmit.planed_at;
+        const responseUrl   = `${state.urlsForFetch.weekForm}?planed_at=${planet_at}&category_id=${categoryId}`;
+
+        await fetch(responseUrl, {
             method: 'POST',
             body: formData
         })
@@ -195,11 +326,23 @@ export default {
             .catch((err) => console.error(err));
 
     },
-    async SUBMIT_FORM_CELL({commit, dispatch}, {formData, dataForSubmit}) {
-        let metricId = dataForSubmit.metricId;
-        let planet_at = dataForSubmit.planed_at
-        let responseUrl = `/lightmetric_vue/weekcell/form?metric_id=${metricId}&planed_at=${planet_at}`
-        let response = await fetch(responseUrl, {
+
+  /**
+   *
+   * @param commit
+   * @param dispatch
+   * @param state
+   * @param formData
+   * @param dataForSubmit
+   * @returns {Promise<void>}
+   * @constructor
+   */
+    async SUBMIT_FORM_CELL({commit, dispatch, state}, {formData, dataForSubmit}) {
+        const metricId = dataForSubmit.metricId;
+        const planet_at = dataForSubmit.planed_at;
+        const responseUrl = `${state.urlsForFetch.cellForm}?metric_id=${metricId}&planed_at=${planet_at}`;
+
+        await fetch(responseUrl, {
             method: 'POST',
             body: formData
         })
@@ -211,29 +354,41 @@ export default {
             .then(data => {
                 commit('REPLACE_CELL_DATA', data)
             })
-            .then(() => {
-                commit('PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL');
-            })
             .catch((err) => console.error(err));
     },
 
+  /**
+   *
+   * @param dispatch
+   * @param dataUrl
+   * @param dataType
+   * @constructor
+   */
     DELETE_DATA({dispatch}, {dataUrl, dataType}) {
-        if (dataType.formType === 'metric') {
-            dispatch('DELETE_FORM_METRIC', dataUrl)
-        } else if (dataType.formType === 'cell') {
-            dispatch('DELETE_FORM_CELL', dataUrl)
-        } else if (dataType.formType === 'week') {
-            dispatch('DELETE_FORM_WEEK', dataUrl)
-        }
+      if (dataType.formType === 'metric') {
+          dispatch('DELETE_FORM_METRIC', dataUrl)
+      } else if (dataType.formType === 'cell') {
+          dispatch('DELETE_FORM_CELL', dataUrl)
+      } else if (dataType.formType === 'week') {
+          dispatch('DELETE_FORM_WEEK', dataUrl)
+      }
     },
 
+  /**
+   *
+   * @param commit
+   * @param dispatch
+   * @param dataUrl
+   * @returns {Promise<void>}
+   * @constructor
+   */
     async DELETE_FORM_METRIC({commit, dispatch}, dataUrl) {
         await fetch(dataUrl)
             .then(response => response.json())
             .then(data => {
                 dispatch('RESET_MODAL');
                 if (data.status === 200) {
-                    let metricId = dataUrl.split('/').reverse()[0];
+                    const metricId = dataUrl.split('/').reverse()[0];
                     commit('DELETE_METRIC', metricId)
                 }
             })
@@ -243,21 +398,57 @@ export default {
 
     },
 
+  /**
+   *
+   * @param commit
+   * @param dispatch
+   * @param dataUrl
+   * @returns {Promise<void>}
+   * @constructor
+   */
     async DELETE_FORM_WEEK({commit, dispatch}, dataUrl) {
-        await fetch(dataUrl)
-            .then(response => response.json())
-            .then(data => {
-                dispatch('RESET_MODAL');
-                if (data.status === 200) {
-                    let weekId = dataUrl.split('/').reverse()[0];
-                    commit('DELETE_WEEK', weekId);
-                }
-            })
+      await fetch(dataUrl)
+        .then(response => response.json())
+        .then(data => {
+            dispatch('RESET_MODAL');
+            if (data.status === 200) {
+                const weekId = dataUrl.split('/').reverse()[0];
+                commit('DELETE_WEEK', weekId);
+            }
+        })
     },
 
+  /**
+   *
+   * @param commit
+   * @param htmlForm
+   * @constructor
+   */
     DELETE_COMMENT_FOR_CELL({commit}, htmlForm) {
-        htmlForm.querySelector('#week_cell_form_comment').value = '';
-        htmlForm.querySelector('#week_cell_form_submit').click();
-    }
+      htmlForm.querySelector('#week_cell_form_comment').value = '';
+      htmlForm.querySelector('#week_cell_form_submit').click();
+    },
 
+  /**
+   *
+   * @param state
+   * @param computedValues
+   * @returns {Promise<boolean>}
+   * @constructor
+   */
+  async UPDATED_COMPUTED_VALUES({state}, computedValues) {
+
+    if( state.isLocal) {
+      return false;
+    }
+    await fetch(state.urlsForFetch.updatingComputedValues, {
+      method: 'POST',
+      body: JSON.stringify(computedValues),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    state.dataForUpdateComputedValues = [];
+  }
 }
