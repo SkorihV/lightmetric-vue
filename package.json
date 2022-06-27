@@ -15,7 +15,8 @@
     "node-sass": "^7.0.1",
     "sass-loader": "^12.0.0",
     "vue": "^3.2.13",
-    "vuex": "^4.0.0"
+    "vuex": "^4.0.0",
+    "vuex-composition-helpers": "^2.0.3"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~5.0.0",

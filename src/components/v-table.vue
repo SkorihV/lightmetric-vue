@@ -4,12 +4,12 @@
         <v-thead
             :categoryId="categoryId"
         ></v-thead>
-          <v-tr
-              v-for="(metric, index) in metrics"
-              :metric="metric"
-              :key="index"
-          >
-          </v-tr>
+            <v-tr
+                v-for="(metric, index) in metrics"
+                :metric="metric"
+                :key="index"
+            >
+            </v-tr>
       </table>
 </template>
 
@@ -17,6 +17,7 @@
 import {mapActions, mapGetters, mapState} from 'vuex'
 import vTr from './v-tr'
 import vThead from './v-thead'
+import {nextTick} from "vue";
 
 
 export default {
@@ -32,13 +33,18 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['UPDATED_COMPUTED_VALUES'])
+    ...mapActions([
+        'SET_CATEGORY_ID_FOR_UPDATE_FORMULA',
+        'INIT_PROCESSING_FORMULA_FOR_CELL',
+        'UPDATE_POSITION_FOR_METRIC_GROUP',
+        'INIT_UPDATED_POSITION_IN_CATEGORY'
+    ]),
   },
   computed: {
     ...mapGetters([
         'categoryNameById',
-        'mondaysDataByCategoryId',
-        'getDataForUpdatedComputedValue'
+        'getDataForUpdatedComputedValue',
+        'initUploadNewDataComputedValues'
     ]),
     categoryId() {
       if (this.metrics.length) {
@@ -49,11 +55,25 @@ export default {
     categoryName() {
       return this.categoryNameById(this.categoryId);
     },
-    mondaysData() {
-      return this.mondaysDataByCategoryId(this.categoryId)
-    },
+    amountMetrics() {
+      return this.metrics?.length;
+    }
   },
-
+  watch: {
+    /**
+     * запускается если в категорию добавляется новая метрика
+     */
+    amountMetrics() {
+      nextTick(() => {
+        this.SET_CATEGORY_ID_FOR_UPDATE_FORMULA(this.categoryId)
+                .then(() => {
+                  this.INIT_PROCESSING_FORMULA_FOR_CELL(true);
+                })
+        this.INIT_UPDATED_POSITION_IN_CATEGORY(this.categoryId);
+        this.UPDATE_POSITION_FOR_METRIC_GROUP(this.categoryId);
+        })
+    }
+  }
 }
 </script>
 
@@ -80,6 +100,4 @@ export default {
     font-size: 12px;
   }
 }
-
-
 </style>

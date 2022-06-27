@@ -36,7 +36,6 @@ import vCommentElement from './v-comment-element'
 
 export default {
   name: "v-modal",
-  mixins: [mDragEndDropForModal],
   components: {
     vCommentElement
   },
@@ -45,9 +44,7 @@ export default {
       chart: null
     }
   },
-  mounted() {
-    this.addEventDragAndDropForModal()
-  },
+
   methods: {
     ...mapActions([
         'SHOW_MODAL',
@@ -62,11 +59,16 @@ export default {
     },
     handlerDelete(e) {
       const t = e.target;
+
       const deleteElement = t.closest('.delete a');
 
       if (deleteElement) {
         e.preventDefault();
-        this.DELETE_DATA({dataUrl: deleteElement.href, dataType: this.getDataForSubmitForm});
+
+        if(confirm('Вы действительно хотите это удалить?!')) {
+          this.DELETE_DATA({dataUrl: deleteElement.href, dataType: this.getDataForSubmitForm});
+
+        }
       }
 
       if(t.closest('.delete-comment-cell a')) {
@@ -75,7 +77,6 @@ export default {
         this.DELETE_COMMENT_FOR_CELL(this.$refs.modal)
             .then(() => {
               this.RESET_MODAL();
-
             });
       }
     },
@@ -164,9 +165,6 @@ export default {
       const form = this.$refs.modal.querySelector('form');
       if (form) {
         const formData = new FormData(form)
-        console.log(form)
-        console.log(formData)
-        console.log(this.getDataForSubmitForm)
         this.SUBMIT_FORM({formData:formData, dataForSubmit: this.getDataForSubmitForm})
       }
     }
@@ -268,10 +266,4 @@ export default {
   display:flex;
 }
 
-
-//.comment-box .comment-item {
-//  margin-bottom: 16px;
-//  border-bottom: 1px solid white;
-//  padding: 4px;
-//}
 </style>

@@ -31,6 +31,9 @@ export default {
         commit('REMOVE_HTML_FOR_MODAL');
         commit('RESET_CHECKBOXES_STAT');
         commit('ADD_DATA_FOR_SUBMIT_FORM', null);
+    },
 
+    async TOGGLE_PRELOADER({commit}, flag) {
+        await commit('SET_FLAG_PRELOADER', flag);
     }
 }

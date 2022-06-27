@@ -77,14 +77,9 @@ export default {
   },
   watch: {
     data() {
-      if (this.data !== null) {
-        this.isDataCell = true;
-      } else {
-        this.isDataCell = false;
-      }
+      this.isDataCell = this.data !== null;
     }
   },
-
 }
 </script>
 

@@ -89,20 +89,11 @@
 import {mapGetters} from "vuex";
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import {ref} from "vue";
 
 export default {
   name: "v-filter-wrapper",
   components: {
     Datepicker
-  },
-  setup() {
-    const dateStart = ref(new Date());
-    const dateEnd = ref(new Date());
-
-    return {
-
-    }
   },
   data() {
     return {
@@ -131,9 +122,9 @@ export default {
           .replace('?', '')
           .split('&')
           .filter(item => {
-            return item.indexOf("typeCategory[]") !== -1;
+            return item.match(/typeCategory/) !== null;
           }).map(item => {
-            return item.replace('typeCategory[]=', '')
+            return item.replace(/typeCategory\[[0-9]*\]=/, '')
           });
     }
     this.initSelectList();
@@ -146,7 +137,6 @@ export default {
         this.selectedCategory = Object.values(this.getCategoriesList).map(category => category.id.toString());
         this.initSelectList();
       })
-
 
     },
     initSelectList() {

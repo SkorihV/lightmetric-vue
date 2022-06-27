@@ -53,13 +53,27 @@
         class="btn btn-danger control-panel__button"
         @click="dropCheckboxes"
     ><i class="fas fa-times"></i></button>
+
     <button
         title="Окно со средним значением"
         type="button"
-        class="btn btn-primary control-panel__button"><i class="far fa-window-restore"></i></button>
+        @click="handlerAverageMode"
+        :class="{'btn-primary':!getIsAverageMode, 'btn-success':getIsAverageMode}"
+        class="btn control-panel__button"><i class="far fa-window-restore"></i></button>
+    <button
+        title="Пользовательские настройки"
+        type="button"
+        :class="{'btn-primary':!showUserOptions, 'btn-success':showUserOptions}"
+        class="btn control-panel__button"
+        @click="showUserOptions = !showUserOptions"
+    ><i class="fas fa-cog"></i></button>
+    <vUserOptionPopup
+        @closePopupUserOptions="showUserOptions = false"
+        :isShow="showUserOptions"
+    ></vUserOptionPopup>
     <a
         title="Добавить новую метрику"
-        href="/lightmetric/type/form"
+        href="/lightmetric_vue/type/form"
         class="add-metric-btn"
         @click.prevent="newMetric"
     >
@@ -71,9 +85,18 @@
 
 <script>
 import {mapActions, mapGetters} from "vuex";
+import vUserOptionPopup from '@/components/userOption/v-user-option-popup'
 
 export default {
   name: "v-control-panel",
+  components: {
+    vUserOptionPopup
+  },
+  data() {
+    return {
+      showUserOptions: false
+    }
+  },
   methods: {
     ...mapActions([
         'TOGGLE_SHOW_HIDE_CHECKBOXES_FOR_STAT',
@@ -85,7 +108,9 @@ export default {
         'TOGGLE_MODE_DRAG_AND_DROP',
         'FETCH_METRIC_FORM',
         'SET_DATA_FOR_SUBMIT_FORM',
-        'RESET_MODAL'
+        'RESET_MODAL',
+        'GET_AVERAGE_DATA',
+        'TOGGLE_AVERAGE_MODE'
     ]),
     showStat() {
       if(this.statGraph.dataCells.length) {
@@ -97,12 +122,16 @@ export default {
           .then(() => {
             this.SET_DATA_FOR_SUBMIT_FORM({formType: 'metric', metricId: null})
           })
-
     },
     dropCheckboxes() {
       this.TOGGLE_HIDE_CHECKBOXES_FOR_STAT();
       this.RESET_MODAL();
-    }
+    },
+
+    handlerAverageMode() {
+      this.GET_AVERAGE_DATA();
+      this.TOGGLE_AVERAGE_MODE();
+    },
   },
   computed: {
     ...mapGetters([
@@ -111,7 +140,8 @@ export default {
         'showInputBlockForWorkingFormula',
         'showHideMetric',
         'statGraph',
-        'modeDragAndDrops'
+        'modeDragAndDrops',
+        'getIsAverageMode',
     ])
   }
 }
@@ -125,6 +155,7 @@ export default {
   flex-direction: column;
   top: 50px;
   z-index: 50;
+  max-width: 45px;
   box-sizing: border-box;
   button {
     border: 1px solid black;

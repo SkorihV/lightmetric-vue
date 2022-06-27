@@ -164,32 +164,64 @@ export default {
       })
 
       cells.forEach(data => {
-        if (data.computed_value) {
-          if (this.isDateTime(data.computed_value)) {
-            dataForStat.data.push(parseFloat(data.computed_value.replace(/:/g, '.')));
-          } else {
-            dataForStat.data.push(parseFloat(data.computed_value));
-          }
-        } else if (data.value) {
-            if (this.isDateTime(data.value)) {
-              dataForStat.data.push(parseFloat(data.value.replace(/:/g, '.')));
-            } else {
-              dataForStat.data.push(parseFloat(data.value));
-            }
-        } else {
-            dataForStat.data.push(null);
-        }
-      })
+        // dataForStat.data.push(data.value);
 
+
+        if (this.isDateTime(data.computed_value || data.value)) {
+          dataForStat.data.push(this.valueForGraph(data));
+        } else if (data.computed_value || data.value) {
+          dataForStat.data.push(parseFloat(data.computed_value || data.value));
+        } else {
+          dataForStat.data.push(null);
+        }
+
+        //
+        // if (data.computed_value) {
+        //   if (this.isDateTime(data.computed_value)) {
+        //     const [hours, minutes] = data.computed_value.split(':');
+        //     dataForStat.data.push(parseFloat(((hours * 60 + minutes) / 60).toFixed(2)));
+        //   } else {
+        //     dataForStat.data.push(parseFloat(data.computed_value));
+        //   }
+        // } else if (data.value) {
+        //     if (this.isDateTime(data.value)) {
+        //       if (this.getUserOptions.typeRoundingInChart) {
+        //         const [hours, minutes] = data.value.split(':');
+        //         dataForStat.data.push(parseFloat(((hours * 60 + minutes) / 60).toFixed()));
+        //       } else {
+        //         dataForStat.data.push(parseFloat(data.value.replace(/:/g, '.')));
+        //
+        //       }
+        //     } else {
+        //       dataForStat.data.push(parseFloat(data.value));
+        //     }
+        // } else {
+        //     dataForStat.data.push(null);
+        // }
+
+      })
       this.SET_DATA_FOR_STAT_GRAPHS(dataForStat);
     },
+
+    valueForGraph(data){
+      let value = data?.computed_value || data?.value || null
+      if (!value) return value;
+      value = value.replace(/:/g, '.');
+
+      if (this.getUserOptions.typeRoundingInChart.value) {
+        const [hours, minutes] = value.split('.');
+        return parseFloat((((parseInt(hours) * 60) + parseInt(minutes)) / 60).toFixed(2));
+      }
+      return parseFloat(value);
+
+    },
     changeCheckbox() {
-        if(this.showCheckboxForStat) {
+        if(this.showCheckboxForStat && !this.isGroup) {
           this.checkboxValue = !this.checkboxValue;
         }
     },
     isDateTime(value){
-       return value.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null;
+       return value?.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null || false;
     },
     handlerClickComment() {
       this.SET_DATA_FOR_COMMENT({userName: this.data.uname, commentText: this.data.comment, dateTime: this.data.updated_at});
@@ -209,7 +241,8 @@ export default {
         'showFormulaMetric',
         'allCellsInMetric',
         'dataResetCheckboxesStat',
-        'displayingComment'
+        'displayingComment',
+        'getUserOptions'
     ]),
     isComment() {
       if (this.data?.comment) {
@@ -222,7 +255,7 @@ export default {
         return (cell.value !== null || cell.value !== '') && (cell.computed_value !== null || cell.computed_value !== '');
       }).length);
 
-    }
+    },
   },
   watch: {
     checkboxValue() {
@@ -232,13 +265,6 @@ export default {
       this.checkboxValue = false;
     },
   },
-  // beforeUpdate() {
-  //   if (this.data?.comment) {
-  //     this.isComment = true;
-  //   } else {
-  //     this.isComment = false;
-  //   }
-  // }
 }
 </script>
 
@@ -257,10 +283,14 @@ export default {
     display: flex;
     justify-content: center;
     margin-right: 30px;
+    margin-left: 16px;
   }
   &__checkbox-wrapper {
     display: flex;
-    margin: 0 3px;
+    margin-right: 3px;
+    +.td-main__content {
+      margin-left: 0;
+    }
   }
   &__checkbox {
     margin: 4px 0 0;

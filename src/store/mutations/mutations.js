@@ -1,3 +1,4 @@
+
 export default {
     SET_IS_LOCAL: (state) => {
         state.isLocal = window.document.location.host.includes('localhost');
@@ -30,6 +31,7 @@ export default {
         }
 
         state.mondays                   = data.mondays;
+        state.mondays.years             = null;
         state.dateEnd                   = data.dateEnd;
         state.dateStart                 = data.dateStart;
         state.categories                = data.categories;
@@ -37,6 +39,7 @@ export default {
         state.metricsGroups             = data.metricsGroups;
         state.discussedWeek             = data.discussedWeek;
         state.dataForStatGraph.planed   = data.mondays;
+        state.userOptions               = data.userOptions;
     },
 
     SHOW_HIDE_METRICS(state, categoryId) {
@@ -131,9 +134,10 @@ export default {
                 break;
             }
         }
-        if (metricFound.cells[planedAt].computed_value != value) {
-            metricFound.cells[planedAt].computed_value = value;
-        }
+
+        if (!metricFound) { return false;}
+        metricFound.cells[planedAt].computed_value = value;
+
     },
 
 
@@ -147,24 +151,29 @@ export default {
         state.categoryIdForUpdateInFormulaMetric = categoryId;
     },
 
-    TOGGLE_PROCESSING_FORMULA_FOR_CATEGORY(state) {
-        state.isProcessingFormulaForCategory = !state.isProcessingFormulaForCategory;
-    },
-
     ADD_PLANED_AT_FOR_UPDATE_FORMULA(state, planedAt) {
         state.planedAtForUpdateInFormulaCell = planedAt;
     },
 
-    TOGGLE_PROCESSING_FORMULA_FOR_CELL(state) {
-        state.isProcessingFormulaForCell = !state.isProcessingFormulaForCell;
+    TOGGLE_PROCESSING_FORMULA_FOR_CELL(state, flag) {
+        state.dataForUpdateComputedValues = [];
+        state.countCellsInProcessing = 0;
+        state.isProcessingFormulaForCell = flag;
     },
 
-    ADD_COMPUTED_VALUE_FOR_UPDATED(state, {computedValue, planed, typeId}) {
-        // state.dataForUpdateComputedValues[`${planed}--${typeID}`] = {computedValue, planed, typeID}
-        state.dataForUpdateComputedValues.push({computedValue, planed, typeId});
+    ADD_COMPUTED_VALUE_FOR_UPDATED(state, {computedValue, planed, typeId, metricName}) {
+        state.dataForUpdateComputedValues.push({computedValue, planed, typeId, metricName});
     },
     ADD_METRIC_FOR_LIGHTING(state, metricId) {
         state.metricIdForLighting = metricId
+    },
+
+    ADD_COUNT_CELLS_IN_PROCESSING(state) {
+        state.countCellsInProcessing++;
+    },
+
+    RESET_COUNT_CELLS_IN_PROCESSING(state) {
+        state.countCellsInProcessing = 0;
     },
 
     /*graph*/
@@ -193,12 +202,12 @@ export default {
         state.currentIdMetricForOverDragAndDrop = metricId;
     },
     MOVEMENT_METRICS(state, {movementMetricId, overMetricId, currentCategoryId}){
-        for (let key in this.state.metricsGroups) {
+        for (let key in state.metricsGroups) {
             if (parseInt(key) === parseInt(currentCategoryId)) {
                 let currentMetricIndex  = null;
                 let overMetricIndex     = null;
 
-                for (let i = 0; i < this.state.metricsGroups[key].length; i++) {
+                for (let i = 0; i < state.metricsGroups[key].length; i++) {
                     if (this.state.metricsGroups[key][i].id === movementMetricId) {
                         currentMetricIndex = i;
                     }
@@ -207,7 +216,7 @@ export default {
                     }
 
                 }
-                this.state.metricsGroups[key].splice(overMetricIndex, 0, this.state.metricsGroups[key].splice(currentMetricIndex, 1)[0]);
+                this.state.metricsGroups[key].splice(overMetricIndex, 0, state.metricsGroups[key].splice(currentMetricIndex, 1)[0]);
                 this.state.metricsGroups[key].map((metric, index) => {
                     metric.position = index.toString();
                 })
@@ -253,13 +262,13 @@ export default {
 
     /* working for data table*/
 
-    REPLACE_METRIC_DATA(state, data) {
-        let metricFound         = getMetricFound(state, data.id);
-        let isChangeableCategory  = false;
-        let isChangeablePosition  = false;
-        let newCategory         = null;
-        let lastCategory        = null;
-
+    REPLACE_METRIC_DATA(state, preData) {
+        const data                  = preData.data;
+        let metricFound             = getMetricFound(state, data.id);
+        let isChangeableCategory    = false;
+        let isChangeablePosition    = false;
+        let newCategory             = null;
+        let lastCategory            = null;
 
         if (metricFound) {
            lastCategory = setLastCategory(metricFound);
@@ -267,7 +276,6 @@ export default {
            isChangeableCategory = computedChangeableCategory(lastCategory, newCategory);
            isChangeablePosition = computedChangeablePosition(metricFound, data);
            updateDataMetricFound(metricFound, data);
-
         }
 
         if (isChangeableCategory) {
@@ -279,7 +287,6 @@ export default {
             excludeMetricFromGroup(metricFound.id, newCategory);
             processCategory(state.metricsGroups[newCategory])
         }
-
 
         function getMetricFound(state, metricId) {
             let metricFound = null;
@@ -295,7 +302,6 @@ export default {
             }
             return metricFound;
         }
-
 
         function setLastCategory(metricFound) {
             return parseInt(metricFound.type_category_id);
@@ -313,19 +319,23 @@ export default {
         }
 
         function updateDataMetricFound(metricFound, data) {
-                metricFound.unit                = data.unit;
-                metricFound.name                = data.name;
-                metricFound.normal              = data.normal;
-                metricFound.comment             = data.comment;
-                metricFound.formula             = data.formula;
-                metricFound.is_hide             = data.isHide;
-                metricFound.minimal             = data.minimal;
-                metricFound.position            = data.position;
-                metricFound.is_group            = data.isGroup;
-                metricFound.is_around           = data.isAround;
-                metricFound.color_row           = data.colorRow;
-                metricFound.updated_at          = data.updatedAt;
-                metricFound.type_category_id    = data.typeCategory.id;
+            const isUpdatedFormula = metricFound.formula === data.formula;
+
+
+            metricFound.unit                = data.unit;
+            metricFound.name                = data.name;
+            metricFound.uname               = preData.userName;
+            metricFound.normal              = data.normal;
+            metricFound.comment             = data.comment;
+            metricFound.formula             = data.formula;
+            metricFound.is_hide             = data.isHide;
+            metricFound.minimal             = data.minimal;
+            metricFound.position            = data.position;
+            metricFound.is_group            = data.isGroup;
+            metricFound.is_around           = data.isAround;
+            metricFound.color_row           = data.colorRow;
+            metricFound.updated_at          = data.updatedAt;
+            metricFound.type_category_id    = data.typeCategory.id;
         }
 
 
@@ -359,16 +369,12 @@ export default {
                 })
         }
 
-
     },
     REPLACE_WEEK_DATA(state, data) {
         let week = {};
         if (state.mondaysData[data.categoryId][data.planed_at] !== undefined) {
             week = state.mondaysData[data.categoryId][data.planed_at];
         }
-
-        if (!week) { return false; }
-
 
         if(Object.keys(week).length) {
             week = createGeneralData(week, data);
@@ -398,7 +404,7 @@ export default {
     REPLACE_CELL_DATA(state, data) {
         let metricFound = null;
         let cell = null;
-
+        let needleKey = null
         for (let key in state.metricsGroups) {
             if (!metricFound ) {
                 metricFound = state.metricsGroups[key].find( metric => {
@@ -406,6 +412,7 @@ export default {
                 })
             }
             if (metricFound) {
+                needleKey = key;
                 break;
             }
         }
@@ -413,24 +420,38 @@ export default {
          cell = metricFound.cells[data.planedAt];
         }
         if (cell) {
-            metricFound.cells[data.planedAt].id             = data.data.id;
-            metricFound.cells[data.planedAt].value          = data.data.value;
-            metricFound.cells[data.planedAt].uname          = data.userName;
-            metricFound.cells[data.planedAt].comment        = data.data.comment;
-            metricFound.cells[data.planedAt].updated_at     = data.data.updatedAt;
-            metricFound.cells[data.planedAt].computed_value = data.data.computedValue;
+            cell.id             = data.data.id;
+            cell.value          = data.data.value;
+            cell.uname          = data.userName;
+            cell.comment        = data.data.comment;
+            cell.updated_at     = data.data.updatedAt;
+            cell.computed_value = data.data.computedValue;
         }
+        metricFound.cells[data.planedAt] = cell;
+
+        if (metricFound ) {
+           state.metricsGroups[needleKey].map(metric => {
+               if(parseInt(metric.id) === parseInt(data.metricId)) {
+                   return metricFound;
+               }
+           })
+        }
+
+
     },
-    CREATE_NEW_METRIC(state, data) {
+    CREATE_NEW_METRIC(state, preData) {
+        const data = preData.data;
         const categoryId = data.typeCategory.id;
         const newMetric = {};
 
         newMetric.name             = data.name;
+        newMetric.uname            = data.userName;
         newMetric.unit             = data.unit;
         newMetric.cells            = {};
+        newMetric.id               = data.id;
         newMetric.normal           = data.normal;
         newMetric.comment          = data.comment;
-        newMetric.formula          = data.comment;
+        newMetric.formula          = data.formula;
         newMetric.is_hide          = data.isHide;
         newMetric.minimal          = data.minimal;
         newMetric.is_group         = data.isGroup;
@@ -438,11 +459,11 @@ export default {
         newMetric.color_row        = data.colorRow;
         newMetric.is_around        = data.isAround;
         newMetric.updated_at       = data.updatedAt;
-        newMetric.type_category_id = data.typeCategory.id;
+        newMetric.type_category_id = categoryId;
 
 
         if (state.metricsGroups[categoryId] === undefined) {
-            console.log("Группа добавленной метрики отсутствует в текущей выборки!")
+            console.error("Группа добавленной метрики отсутствует в текущей выборки!")
             return false;
         }
 
@@ -455,20 +476,24 @@ export default {
                     planed_at: monday
                 }
         })
+        if (state.metricsGroups[categoryId].length >=  parseInt(newMetric.position)) {
+            for (let i = 0; i < state.metricsGroups[categoryId].length; i++) {
+                const metric = state.metricsGroups[categoryId][i];
 
-        for (let i = 0; i < state.metricsGroups[categoryId].length; i++) {
-            const metric = state.metricsGroups[categoryId][i];
+                if (parseInt(metric.position) >=  parseInt(newMetric.position)) {
+                    let currentIndex = i;
+                    if (i === state.metricsGroups[categoryId].length) {
+                        currentIndex = state.metricsGroups[categoryId].length;
+                        newMetric.position = state.metricsGroups[categoryId].length;
+                    }
+                    state.metricsGroups[categoryId].splice(currentIndex, 0, newMetric);
 
-            if(parseInt(metric.position) >=  parseInt(newMetric.position)) {
-                let currentIndex = i;
-                if (i === state.metricsGroups[categoryId].length) {
-                    currentIndex = state.metricsGroups[categoryId].length;
-                    newMetric.position = state.metricsGroups[categoryId].length;
+                    break;
                 }
-                state.metricsGroups[categoryId].splice(currentIndex, 0, newMetric);
-
-                break;
             }
+        } else {
+            newMetric.position = state.metricsGroups[categoryId].length - 1;
+            state.metricsGroups[categoryId].push(newMetric);
         }
         return true;
     },
@@ -497,6 +522,31 @@ export default {
                 }
             }
         }
-    }
+    },
 
+    CHANGE_AVERAGE(state) {
+        state.isAverageMode = !state.isAverageMode;
+    },
+    ADD_AVERAGE_DATA(state, {averageDataForYears}) {
+        for(let key in averageDataForYears)  {
+            let averageData = averageDataForYears[key]
+           if (state.metricsGroups[key]) {
+               Object.values(state.metricsGroups[key]).forEach(metric => {
+                   metric.years = averageData.filter(data => metric.id === data.id)?.[0]?.years || null;
+               })
+           }
+      }
+
+    },
+
+    SET_FLAG_PRELOADER(state, flag) {
+        state.showPreloader = flag;
+    },
+
+    UPDATED_POSITION_IN_CATEGORY(state, categoryId) {
+        state.metricsGroups[categoryId] = Array.from(state.metricsGroups[categoryId]).map((item, index) => {
+            item.position = index;
+            return item;
+        })
+    }
 }

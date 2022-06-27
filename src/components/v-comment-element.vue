@@ -7,7 +7,7 @@
         </div>
         <i class="far fa-clock"></i>
         <div class="comment-box__time">
-          {{dataForComment.dateTime}}
+          {{parseResponseDate(dataForComment.dateTime)}}
         </div>
       </div>
       <div class="comment-box__text" v-html="processedCommentText"></div>
@@ -20,7 +20,20 @@ import {mapActions, mapGetters} from "vuex";
 export default {
   name: "v-comment-element",
   methods: {
-    ...mapActions([''])
+    ...mapActions(['']),
+
+    parseResponseDate(date) {
+      const currentDate = new Date(date);
+      const day = ('0' + currentDate.getDate()).slice(-2);
+      const month = ('0' + (currentDate.getMonth() + 1)).slice(-2);
+      const year = currentDate.getFullYear();
+      const horse = ('0' + currentDate.getHours()).slice(-2);
+      const minutes = ('0' + currentDate.getMinutes()).slice(-2);
+      const seconds = ('0' + currentDate.getSeconds()).slice(-2);
+
+      return isNaN(day) ? date :
+      `${day}.${month}.${year} ${horse}:${minutes}:${seconds}`;
+    }
   },
   computed: {
     ...mapGetters(['dataForComment']),

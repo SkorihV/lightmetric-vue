@@ -48,8 +48,8 @@ export default {
         let listIds = '';
 
         for (let key in state.metricsGroups) {
-           if (key === metricGroupId) {
-               let group = state.metricsGroups[key];
+           if (key === metricGroupId.toString()) {
+               const group = state.metricsGroups[key];
                group.forEach((metric,index, arr) => {
                    if(index === arr.length - 1) {
                        listIds += `${metric.id}`
@@ -94,8 +94,6 @@ export default {
                     commit('PUT_HTML_FOR_MODAL',response.data.form_type);
                     commit('VISIBILITY_MODAL', true);
                 })
-
-
         } else {
             axios.get(`${state.urlsForFetch.metricForm}${search}`)
                 .then(response => {
@@ -169,7 +167,7 @@ export default {
     },
 
   /**
-   *
+   * Отправить данные на сервер из input'а ячейки
    * @param commit
    * @param state
    * @param dispatch
@@ -207,14 +205,11 @@ export default {
           .then(() => {
             dispatch('TOGGLE_IS_SUBMITING');
           })
-          .then(() => {
-            dispatch('INIT_PROCESSING_FORMULA_FOR_CELL');
-          })
     }
   },
 
   /**
-   *
+   * Отправить данные на сервер с новой формулой метрики
    * @param commit
    * @param state
    * @param dispatch
@@ -224,17 +219,16 @@ export default {
    * @constructor
    */
    async SAVING_FORMULA_FOR_METRIC({commit, state, dispatch}, {formData, metricId}){
+        dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', false);
         const request = `${state.urlsForFetch.savingMetricFormula}?id=${metricId}`
 
-       await fetch(request, {
+       const requestData = await fetch(request, {
            method: 'POST',
            body: formData
         })
-       .then(response => {
-         dispatch('INIT_PROCESSING_FORMULA_FOR_CATEGORY');
-           console.log(response.status, 'INIT_PROCESSING_FORMULA_FOR_CATEGORY')
-       })
-
+    setTimeout(() => {
+      dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', true);
+      }, 500)
     },
 
   /**
@@ -243,13 +237,13 @@ export default {
    * @param data
    * @constructor
    */
-    SUBMIT_FORM({dispatch}, data) {
+    async SUBMIT_FORM({dispatch}, data) {
         if (data.dataForSubmit?.formType === 'metric') {
-            dispatch('SUBMIT_FORM_METRIC', data)
+            await dispatch('SUBMIT_FORM_METRIC', data)
         } else if (data.dataForSubmit?.formType === 'cell') {
-            dispatch('SUBMIT_FORM_CELL', data)
+           await dispatch('SUBMIT_FORM_CELL', data)
         } else if (data.dataForSubmit?.formType === 'week') {
-            dispatch('SUBMIT_FORM_WEEK', data)
+            await dispatch('SUBMIT_FORM_WEEK', data)
         }
     },
 
@@ -260,41 +254,42 @@ export default {
    * @param state
    * @param formData
    * @param dataForSubmit
-   * @returns {Promise<void>}
+   * @returns {Promise<T|void>}
    * @constructor
    */
     async SUBMIT_FORM_METRIC({commit, dispatch, state}, {formData, dataForSubmit}) {
-        const metricId = dataForSubmit.metricId;
+    dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', false);
+    const metricId = dataForSubmit.metricId;
         let responseUrl = `${state.urlsForFetch.metricForm}`
 
         if (metricId) {
             responseUrl += `?metric_id=${metricId}`;
         }
-        await fetch(responseUrl, {
+        return await fetch(responseUrl, {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
-            .then(data => {
-                dispatch('RESET_MODAL');
-                return data.data;
-            })
-            .then(data => {
-                if(metricId) {
-                    commit('REPLACE_METRIC_DATA', data)
-                } else {
-                    commit('CREATE_NEW_METRIC', data)
-                }
-                return data;
-            })
-            .then((data) => {
-                setTimeout(() => {
-                    dispatch('UPDATE_POSITION_FOR_METRIC_GROUP', data.typeCategory.id);
-                    commit('PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL');
-                }, 200)
-            })
-            .catch((err) => console.error(err));
-    },
+        .then(response => response.json())
+        .then(data => {
+            dispatch('RESET_MODAL');
+            return data;
+        })
+        .then(data => {
+            if(metricId) {
+                commit('REPLACE_METRIC_DATA', data)
+            } else {
+                commit('CREATE_NEW_METRIC', data);
+            }
+        return data.data;
+        })
+        .then(() => {
+            setTimeout(() => {
+                // dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', true);
+                commit('PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL');
+            }, 500)
+        })
+        .catch((err) => console.error(err));
+  },
 
   /**
    *
@@ -311,20 +306,14 @@ export default {
         const planet_at     = dataForSubmit.planed_at;
         const responseUrl   = `${state.urlsForFetch.weekForm}?planed_at=${planet_at}&category_id=${categoryId}`;
 
-        await fetch(responseUrl, {
+        const response = await fetch(responseUrl, {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
-            .then(data => {
-                dispatch('RESET_MODAL');
-                return data.data;
-            })
-            .then(data => {
-                commit('REPLACE_WEEK_DATA', data);
-            })
-            .catch((err) => console.error(err));
 
+        const data = await response.json()
+        await dispatch('RESET_MODAL');
+        await commit('REPLACE_WEEK_DATA', data.data);
     },
 
   /**
@@ -338,23 +327,20 @@ export default {
    * @constructor
    */
     async SUBMIT_FORM_CELL({commit, dispatch, state}, {formData, dataForSubmit}) {
+        dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', false);
         const metricId = dataForSubmit.metricId;
         const planet_at = dataForSubmit.planed_at;
-        const responseUrl = `${state.urlsForFetch.cellForm}?metric_id=${metricId}&planed_at=${planet_at}`;
-
-        await fetch(responseUrl, {
+        const responseUrl = `${state.urlsForFetch.cellForm}?planed_at=${planet_at}&metric_id=${metricId}`;
+        const response = await fetch(responseUrl, {
             method: 'POST',
-            body: formData
+            body: formData,
         })
-            .then(response => response.json())
-            .then(data => {
-                dispatch('RESET_MODAL');
-                return data;
-            })
-            .then(data => {
-                commit('REPLACE_CELL_DATA', data)
-            })
-            .catch((err) => console.error(err));
+    const json = await response.json();
+    await dispatch('RESET_MODAL');
+    await commit('REPLACE_CELL_DATA', json)
+    setTimeout(() => {
+      dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', true);
+    }, 500)
     },
 
   /**
@@ -392,10 +378,6 @@ export default {
                     commit('DELETE_METRIC', metricId)
                 }
             })
-    },
-
-    async DELETE_FORM_CELL({commit}, dataUrl) {
-
     },
 
   /**
@@ -438,17 +420,40 @@ export default {
    */
   async UPDATED_COMPUTED_VALUES({state}, computedValues) {
 
-    if( state.isLocal) {
+    if( state.isLocal || !computedValues) {
+      console.error('Отправка данных по обновлению ComputedValues не состоялась. Содержимое массива: ' + computedValues)
       return false;
     }
+
     await fetch(state.urlsForFetch.updatingComputedValues, {
       method: 'POST',
       body: JSON.stringify(computedValues),
       headers: {
         'Content-Type': 'application/json'
       }
+    })
+
+  },
+
+  GET_AVERAGE_DATA({state, getters, commit}) {
+    let url = state.urlsForFetch.AllAverageValuesForCategory + '?';
+
+    getters.getCategoriesListIds.forEach(id => {
+      url = `${url}categoryId[]=${id}&`;
     });
 
-    state.dataForUpdateComputedValues = [];
+    if (state.isLocal) {
+      axios.get(`http://localhost:3000/data`)
+          .then((data) => {
+            commit('ADD_AVERAGE_DATA', data.data);
+          })
+    } else {
+      fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            commit('ADD_AVERAGE_DATA', data);
+          })
+    }
+
   }
 }

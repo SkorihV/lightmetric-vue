@@ -2,47 +2,71 @@
   <td
       :style="style"
       class="table__cell cell"
-      :class="[classes, colorCellClass, {isEditValue: isEditValue, discussedWeek: getDiscussedWeek === this.data.planed_at}]"
+      :class="[classes, colorCellClass, {isEditValue: isEditValue, discussedWeek: getDiscussedWeek === data.planed_at}]"
       @contextmenu.prevent="getCellForm"
       @dblclick.stop="handlerDbClickCell"
-
+      @mouseover="handlerOver"
+      @mouseleave="handlerLeave"
   >
     <div class="cell__content">
-      <div v-if="data && !isEditValue" class="cell__value">{{ valueInOutput }}</div>
-      <div v-if="unit && !isEditValue && valueInOutput" class="cell__unit">&nbsp;{{unit}}</div>
-<!--      <div v-if="isEditValue" v-html="htmlForModal"></div>-->
+      <template v-if="!isEditValue && valueInOutput?.length">
+        <div class="cell__value">{{ valueInOutput }}</div>
+        <div v-if="unit" class="cell__unit">&nbsp;{{unit}}</div>
+      </template>
       <input
           class="cell__input"
           v-if="isEditValue"
-          :value="data?.value"
-          @change="updateDataCell"
+          v-model.lazy.trim="inputValue"
           @blur="hideInput"
+          @keydown.enter="submitInput"
           @vnode-mounted="({ el }) => el.focus()"
       >
     </div>
     <div
-        v-if="showFormulaMetric && isValue"
-        class="cell__true-value-prompt">{{data.value}}</div>
+        v-if="showFormulaMetric && showPromptTrueValue "
+        class="cell__true-value-prompt">{{data?.value}}</div>
     <v-comment-trigger
         v-if="isComment"
-        :dataComment="data.comment"
+        :dataComment="data?.comment"
         @click.stop="handlerClickComment"
     ></v-comment-trigger>
+      <v-average-popup
+        :metricName = "metricName"
+        :averageValues="averageValues"
+        :showAverageBlock="showAverageBlock"
+        :years="years"
+      ></v-average-popup>
   </td>
 </template>
 
 <script>
 import vCommentTrigger from './v-comment-trigger'
 import mComputedParamsCell from "@/mixins/m-computed-params-cell";
-import mComputedFormulaMethods from '@/mixins/m-computed-formula-methods'
-import {mapActions, mapGetters} from "vuex";
+import mComputedFormulaMethods from '@/mixins/m-computed-formula-methods';
+import vAveragePopup from "./v-average-popup"
+
+
+import {
+  watch,
+  computed,
+  reactive,
+  ref,
+  toRef,
+  nextTick,
+  } from 'vue';
+import {useStore} from 'vuex';
+import {updateColor} from '@/composable/utils/u-computed-params-sell';
+import {isTime, separatorThousands, evalValue, getArrayParams} from '@/composable/utils/utils';
+
+import {useStoreGetters, useStoreActions} from '@/composable/use/useStore'
 
 
 export default {
   name: "v-td-cell",
   mixins: [mComputedParamsCell, mComputedFormulaMethods],
   components: {
-    vCommentTrigger
+    vCommentTrigger,
+    vAveragePopup
   },
   props: {
     data: {
@@ -85,184 +109,325 @@ export default {
     categoryId: {
       type: Number,
       required: true,
+    },
+    years: {
+      type:Object
+    },
+    metricName: {
+      type:String
+    },
+    averageValues: {
+      type:Object
     }
   },
-  data() {
-    return {
-      isValue: false,
-      isEditValue: false,
-      valueChanged: false,
-      htmlForm: '',
-      cellsCurrentMetric: [],
-    }
-  },
-  mounted() {
-    if (this.data.value && this.data.computed_value) {
-      this.isValue = this.data.value != this.data.computed_value
-    }
-    if (this.metricId && this.formula) {
-      this.cellsCurrentMetric = this.allCellsInMetric(this.metricId);
-      this.$nextTick(() => {
-        this.processingFormula();
-      })
-    }
-  },
-  methods: {
-    ...mapActions([
-      'FETCH_CELL_FORM_CONTEXT',
-      'RESET_MODAL',
-      'EDIT_MODE_ON',
-      'SET_DATA_FOR_COMMENT',
-      'SET_DATA_FOR_SUBMIT_FORM',
-      'FETCH_CELL_FORM_VALUE',
-      'ADD_HTML_IN_MODAL',
-      'SET_DATA_FOR_UPDATING_COMPUTED_VALUE',
-      'SET_PLANED_AT_FOR_UPDATE_FORMULA_IN_CELL'
 
-        ]),
-    getCellForm() {
-      if (this.isGroup) { return false;}
-      this.RESET_MODAL()
+  setup(props){
+    const store = useStore();
+    const {dispatch, commit} = store;
+    const {
+      getDiscussedWeek,
+      showFormulaMetric,
+      isProcessingFormulaForCell,
+      metricForId,
+      allMetrics,
+      isAverageMode,
+      getCategoryIdForProcessingFormulaInCells,
+      } =  useStoreGetters();
+
+    const {
+      SET_COMPUTED_VALUE,
+      SET_DATA_FOR_UPDATING_COMPUTED_VALUE,
+    } = useStoreActions();
+
+    let showPromptTrueValue = ref(false);
+    let isEditValue         = ref(false);
+    let value               = null;
+    let showAverageBlock    = ref(false);
+
+    const p           = reactive(props);
+    const data        = reactive(p.data);
+    const metricId    = toRef(p, 'metricId');
+    const formula     = toRef(p, 'formula');
+    const isGroup     = toRef(p, 'isGroup');
+    const isAround    = toRef(p, 'isAround');
+    const normal      = toRef(p, 'normal');
+    const minimal     = toRef(p, 'minimal');
+    const categoryId  = toRef(p, 'categoryId');
+    const years       = toRef(p, 'years');
+    const metricName  = toRef(p, 'metricName');
+
+    const averageValues = reactive(p.averageValues);
+
+    let inputValue    = ref(data?.value || '');
+    if (data?.value) {
+      value = toRef(data, 'value')
+    }
+
+    const colorCellClass = computed(() => (data && normal.value !== '' && minimal.value !== '' && defineValueInInputData.value !== '')
+        ? updateColor(defineValueInInputData.value.toString(), normal.value, minimal.value)
+        : '');
+
+    if (data?.value && data?.computed_value) {
+      showPromptTrueValue = data?.value.toString() !== data?.computed_value.toString();
+    }
+
+    const isComment = computed(() => data && data?.comment)
+
+    const getCellForm = () => {
+      if (isGroup.value) { return false;}
+
+      dispatch('RESET_MODAL')
           .then(() => {
-            this.EDIT_MODE_ON();
-            this.FETCH_CELL_FORM_CONTEXT({metricId: this.metricId, planedAt: this.data.planed_at})
+            dispatch('EDIT_MODE_ON');
+            dispatch('FETCH_CELL_FORM_CONTEXT', {metricId: metricId.value, planedAt: data.planed_at})
           })
           .then(() => {
-            this.SET_DATA_FOR_SUBMIT_FORM({formType:'cell', metricId: this.metricId, planed_at:this.data.planed_at})
+            dispatch('SET_DATA_FOR_SUBMIT_FORM', {formType:'cell', metricId: metricId.value, planed_at: data.planed_at})
           })
-     },
-    handlerClickComment() {
-      this.SET_DATA_FOR_COMMENT({userName: this.data.uname, commentText: this.data.comment, dateTime: this.data.updated_at});
-    },
-    handlerDbClickCell() {
-      this.isEditValue = true;
-      this.RESET_MODAL()
-    },
-    updateDataCell(e) {
-      this.SET_PLANED_AT_FOR_UPDATE_FORMULA_IN_CELL(this.data.planed_at)
-      this.data.value = e.target.value.trim();
-        this.FETCH_CELL_FORM_VALUE({metricId: this.metricId, planedAt: this.data.planed_at, newValue: this.data.value})
-        //    .then(() => {
-        //          this.$nextTick(() => {
-        //             this.processingFormula();
-        //            })
-        // })
-    },
-    hideInput() {
-      this.isEditValue = false;
     }
-  },
-  computed: {
-    ...mapGetters([
-      'showFormulaMetric',
-      'allCellsInMetric',
-      'showInputBlockForWorkingFormula',
-      'getPlanedAtForUpdateInFormulaCell',
-      'getDataForUpdateInFormulaMetric',
-      'htmlForModal',
-      'getDataForSubmitForm',
-      'getDiscussedWeek',
-      'isProcessingFormulaForCategory',
-      'isProcessingFormulaForCell'
-    ]),
-    value() {
-      return this.data.value;
-    },
-    isComment() {
-      return this.data && this.data.comment;
+    const handlerClickComment = () =>  {
+      dispatch('SET_DATA_FOR_COMMENT',{userName: data.uname, commentText: data.comment, dateTime: data.updated_at});
+    }
+    const handlerDbClickCell = () =>  {
+      if (isGroup.value) { return false;}
+      isEditValue.value = true;
+      dispatch('RESET_MODAL');
+    }
 
-    },
-    defineValueInInputData() {
+    const hideInput = () => {
+      isEditValue.value = false;
+    }
+    const submitInput = () => {
+      hideInput();
+    }
 
-      if (!this.data) { return '';}
+    watch(inputValue, (newValue) => {
+      dispatch('SET_PLANED_AT_FOR_UPDATE_FORMULA_IN_CELL',(data.planed_at))
+          .then(()=> {
+            dispatch('SET_DATA_FOR_SUBMIT_FORM', {formType:'cell', metricId: metricId.value, planed_at: data.planed_at})
+          })
+          .then(() => {
+            dispatch('FETCH_CELL_FORM_VALUE',{metricId: metricId.value, planedAt: data.planed_at, newValue: newValue})
+          })
+    })
 
-      if (this.data.computed_value?.toString().length) {
-        return this.data.computed_value.toString().replace(/ /g, "");
-      } else if (this.data.value?.toString().replace(/ /g, "").length) {
-        return this.data.value.toString().replace(/ /g, "");
+    /*Блок по работе со значением в ячейке*/
+
+    const defineValueInInputData = computed(() => {
+      if (!data) { return '';}
+
+      if (data.computed_value !== null) {
+        return data.computed_value.toString().replace(/ /g, "");
       }
+      if(data?.value){
+        return data.value.toString().replace(/ /g, "");
+      }
+
       return '';
-    },
-    valueIsAround() {
-      let value = this.defineValueInInputData;
+    })
 
-      if (this.valueIsNumber && value.length && this.isAround == '1') {
-        value = parseFloat(value).toFixed(2);
-      } else if (this.valueIsNumber && value.length && this.isAround == '0') {
-        value = parseInt(value).toFixed(0);
+    const valueIsNumber = computed(() => (data) ? !isTime(defineValueInInputData.value) : true );
+
+    /**
+     * Обработать значение на дробную часть
+     * @type {ComputedRef<unknown>}
+     */
+    const processingValueIsAround = computed(() => {
+      let value = defineValueInInputData.value;
+      const valueLength = value.length;
+      if (!valueIsNumber.value) {return value;}
+      if (!valueLength || isNaN(parseInt(value))) {return '';}
+
+
+      if (isAround.value == 1 || isAround.value === true ) {
+        return Number(parseFloat(value).toFixed(2));
+      } else if (isAround.value == 0 ||  isAround.value === false) {
+        return Number(parseInt(value).toFixed(0));
+      }
+    })
+
+    /**
+     * Обработать значение на тысячные и добавить пробелы-разделители
+     * @type {ComputedRef<T>}
+     */
+    const valueSeparatorThousands = computed(() => {
+      let value = processingValueIsAround.value;
+      const valueLength = value?.toString().length;
+      if (valueIsNumber.value && valueLength) {
+        value = separatorThousands(value);
       }
       return value;
-    },
-    valueSeparatorThousands() {
+    })
 
-      let value = this.valueIsAround;
-      if (this.valueIsNumber && value.length) {
-        value = this.separatorThousands(value);
+    const valueInOutput = computed(() => {
+      return valueSeparatorThousands.value;
+    })
+
+    //Блок по работе с формулами//
+
+    /**
+     * Запускаем расчет формулы при изменении в ячейки
+     */
+    watch(isProcessingFormulaForCell,() => {
+     if(isProcessingFormulaForCell && parseInt(getCategoryIdForProcessingFormulaInCells.value) === categoryId.value) {
+       nextTick(() => {
+         processingFormula(p)
+             .then(() => {
+               commit('ADD_COUNT_CELLS_IN_PROCESSING');
+             });
+       })
+     }
+
+
+    })
+
+    /**
+     * Расчет значения в ячейке исходя из формулы в строке
+     * @param props
+     */
+    async function processingFormula (props)  {
+      const params = getArrayParams(metricForId(props.data.type_id));
+      let resultValueString = '';
+      let resultData = '';
+
+      if (!isTime(props.data.value)) {
+        if (params) {
+          resultValueString = generateResultOnFormulaInCell(props.data, params);
+          resultData = evalValue(resultValueString) ? evalValue(resultValueString) : '';
+        } else if (isTime(props.data.value)) {
+          resultData = (props.data.value);
+        } else {
+          resultData = evalValue(props.data.value) ? evalValue(props.data.value) : '';
+        }
+
+        if (!isNaN(parseFloat(resultData))) {
+          resultData = Math.round(resultData * 100) / 100;
+        }
+      } else {
+        resultData = props.data.value ?? '';
       }
-      return value;
-    },
-    valueInOutput() {
-      return this.valueSeparatorThousands;
-    },
-    colorCellClass() {
-      if (!this.data || !this.normal || !this.minimal || !this.defineValueInInputData) {
-        return '';
+
+      if (props.data.computed_value != resultData) {
+
+        await SET_COMPUTED_VALUE({
+          metricId: props.data.type_id,
+          planedAt: props.data.planed_at,
+          value: resultData
+        })
+        await SET_DATA_FOR_UPDATING_COMPUTED_VALUE({
+          computedValue: resultData,
+          planed: props.data.planed_at,
+          typeId: props.data.type_id,
+          metricName: metricName.value
+        })
       }
-      return this.updateColor();
-     },
-    valueIsNumber() {
-      if (this.data) {
-        return !this.isDateTime(this.defineValueInInputData);
-      }
-      return true;
+
     }
-  },
-  watch: {
-    formula() {
-      // console.log('fprmula', this.data.value, ' - value', this.data.computed_value, ' - computed_value',  11112)
 
+    function generateResultOnFormulaInCell(cell, params) {
+      let resultValueString = '';
+      if (isTime(cell.value)) { return false; }
 
-      this.$nextTick(() => {
-
-        // console.log('fprmula', this.data.value, ' - value', this.data.computed_value, ' - computed_value',  2222233)
-        this.processingFormula();
+      params.forEach ((param) => {
+        resultValueString += getFormulaCell(param, cell);
       })
+      return evalValue(resultValueString);
+    }
 
-    },
-    valueInOutput() {
-      // console.log('valueInOutput', this.data.value, ' - value', this.data.computed_value, ' - computed_value', 1111)
+    function getFormulaCell(param, cell) {
+      const allMetricsArr = allMetrics.value;
 
-      this.$nextTick(() => {
-        // console.log('valueInOutput', this.data.value, ' - value', this.data.computed_value, ' - computed_value', 2222)
-        this.processingFormula();
+      let result = '';
+      const isAlias = (param.search(/\$[0-9]+\$/) >= 0);
 
-      });
-    },
-    isProcessingFormulaForCell() {
-      // console.log('isProcessingFormulaForCell' , this.data.value, ' - value', this.data.computed_value, ' - computed_value')
-      if (this.getPlanedAtForUpdateInFormulaCell === this.data.planed_at) {
-        // console.log('isProcessingFormulaForCell' , this.data.value, ' - value', this.data.computed_value, ' - computed_value', this.getPlanedAtForUpdateInFormulaCell, this.data.planed_at )
-        this.processingFormula();
+      if (!isAlias) {
+        return  ` ${param} `;
       }
-    },
 
-    /*Запускать обновление в случае изменения формулы в таблице*/
-    isProcessingFormulaForCategory () {
-      if (this.getDataForUpdateInFormulaMetric === this.categoryId) {
-        // console.log('isProcessingFormulaForCategory' , this.data.value, ' - value', this.data.computed_value, ' - computed_value', this.getDataForUpdateInFormulaMetric,   this.categoryId)
-        this.processingFormula();
+      let needleMetric = null;
+      const aliasId = param.match(/[0-9]+/)[0];
+
+      for ( let i = 0; i < allMetricsArr.length; i++) {
+        if (allMetricsArr[i].id === aliasId) {
+          needleMetric = allMetricsArr[i];
+          break;
+        }
       }
-    },
-    isEditValue(){
-      if (this.isEditValue) {
-        this.SET_DATA_FOR_SUBMIT_FORM({formType:'cell', metricId: this.metricId, planed_at: this.data.planed_at})
+      if (! needleMetric ) { return false; }
+
+
+      if (Number(cell.type_id) === Number(needleMetric.id)) {
+        if (cell.value !== null && cell.value.toString().trim() !== '') {
+          return ` ${evalValue(cell.value)} `;
+        }
+        return false;
       }
-    },
+
+      const params = getArrayParams(metricForId(needleMetric.id));
+      let currentNeedleCell = needleMetric.cells[cell.planed_at];
+
+      if (!params) {
+        if (currentNeedleCell.value !== null
+            && currentNeedleCell.value !== ''
+            && !isTime(currentNeedleCell.value)
+        ) {
+          return ' ' +  evalValue(currentNeedleCell.value) + ' '
+        }
+        return false;
+      }
+
+      for (let i = 0; i < params.length; i++) {
+        result += getFormulaCell(params[i], currentNeedleCell);
+      }
+
+      if (result) {
+        return evalValue(result);
+      }
+      return false;
+    }
+
+
+    /*Блок по работе со средним значением*/
+
+    const handlerOver = () => {
+      if (isAverageMode.value && !showAverageBlock.value) {
+        showAverageBlock.value = true;
+      }
+    }
+    const handlerLeave = () => {
+        showAverageBlock.value = false;
+    }
+
+    return {
+      colorCellClass,
+      getDiscussedWeek,
+      showFormulaMetric,
+      data,
+      showPromptTrueValue,
+      isComment,
+      isEditValue,
+      metricId,
+      formula,
+      isGroup,
+      valueInOutput,
+      valueIsAround: processingValueIsAround,
+      inputValue,
+      isAverageMode,
+      showAverageBlock,
+      years,
+      metricName,
+      averageValues,
+
+      getCellForm,
+      handlerClickComment,
+      handlerDbClickCell,
+      hideInput,
+      handlerOver,
+      handlerLeave,
+      submitInput,
+      }
   },
-  // beforeUpdate() {
-  //   console.log('beforeUpdate' , this.data.value, ' - value', this.data.computed_value, ' - computed_value')
-  //   this.processingFormula();
-  // }
+
 }
 </script>
 

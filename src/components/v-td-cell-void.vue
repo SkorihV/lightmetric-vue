@@ -5,8 +5,8 @@
       :class="classes"
   >
     <div class="cell__content">
-      <div v-if="title" class="cell__title">{{title}}</div>
-      <div v-if="unit && title" class="cell__unit">&nbsp;{{unit}}</div>
+      <div v-if="cellValue !== ''" class="cell__title">{{cellValue}}</div>
+      <div v-if="unit && cellValue !== ''" class="cell__unit">&nbsp;{{unit}}</div>
     </div>
   </td>
 </template>
@@ -29,7 +29,28 @@ export default {
       type: [String, null],
       default: null
     },
-  }
+    height: {
+      type: String,
+      default: ''
+    }
+  },
+  methods: {
+    isDateTime(value){
+      if (!value) {return false}
+      return  value.toString().match('[0-9]+:[0-5][0-9](:[0-5][0-9])?') !== null;
+    },
+  },
+  computed: {
+    cellValue() {
+      if (this.isDateTime(this.title)) {
+        return this.title;
+      } else if (!isNaN(parseFloat(this.title)) && !isNaN(Number(this.title))) {
+        return Number(this.title)
+      } else {
+        return this.title?.split('-').length === 2 ? this.title : '';
+      }
+    },
+  },
 }
 </script>
 

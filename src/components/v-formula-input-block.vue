@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import {mapActions, mapGetters, mapState} from "vuex";
+import {mapActions, mapGetters} from "vuex";
 
 export default {
   name: "v-formula-input-block",
@@ -40,6 +40,7 @@ export default {
       metricNameForPrompt: '',
     }
   },
+
   methods: {
     ...mapActions([
         'SAVING_FORMULA_FOR_METRIC',
@@ -56,18 +57,17 @@ export default {
     },
 
     getCurrentPosition (e) {
-      this.getAliasForInput(e.target.value, e.target.selectionStart)
+      this.getAliasForInput(e.target.value, e.target.selectionStart);
     },
     getAliasForInput(str, pos) {
       str = String(str);
       pos = Number(pos) >>> 0;
 
-      const left = str.slice(0, pos).lastIndexOf('$');
-      const right = str.slice(pos).search(/\${1}/);
-
-      let alias = str.slice(left, right + pos + 1);
-
+      const left    = str.slice(0, pos).lastIndexOf('$');
+      const right   = str.slice(pos).search(/\${1}/);
+      let alias     = str.slice(left, right + pos + 1);
       const isAlias = (alias.search(/\$[0-9]+\$/) >= 0);
+
       if (!isAlias){
         this.metricNameForPrompt = '';
         this.SET_METRIC_ID_FOR_LIGHTING(null);
@@ -77,19 +77,21 @@ export default {
       this.SET_METRIC_ID_FOR_LIGHTING(alias.toString());
       this.metricNameForPrompt = this.metricForId(alias).name;
     },
+
     closeInput() {
       this.SET_METRIC_ID_FOR_LIGHTING(null);
       this.TOGGLE_SHOW_HIDE_INPUT_BLOCK_FORMULA();
     }
   },
+
   computed: {
     ...mapGetters([
         'showInputBlockForWorkingFormula',
         'getMetricForFormula',
         'metricForId',
     ]),
-
   },
+
   watch: {
     getMetricForFormula() {
       this.modelValue = this.metricForId(this.getMetricForFormula)
