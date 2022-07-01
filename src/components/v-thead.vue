@@ -20,7 +20,7 @@
       <v-th
           v-for="(mondayDate, index) in mondaysList"
           classes="table__th "
-          :title="mondayDate"
+          :title="processingDate(mondayDate)"
           :key="index"
           :data="mondayDataByIdAndPlanedAt({id: categoryId, planed: mondayDate})"
           :planedAt="mondayDate"
@@ -45,10 +45,28 @@ export default {
       required: true
     }
   },
+  methods: {
+    processingDate(mondayDate) {
+
+      if (!this.getUserOptions.typeDisplayTitleMonth.value) {
+        return mondayDate;
+      }
+
+      const [day, month, year] = mondayDate.split('-');
+      const newDate = `${month}-${day}-${year}`
+      const date = new Date(newDate)
+      const ruMonth = date.toLocaleString('ru', {
+        month: 'long'
+      });
+
+      return `${day}-${ruMonth}-${year}`;
+    }
+  },
   computed: {
     ...mapGetters([
         'mondaysList',
         'mondayDataByIdAndPlanedAt',
+        'getUserOptions'
     ])
   }
 }

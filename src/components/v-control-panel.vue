@@ -73,7 +73,7 @@
     ></vUserOptionPopup>
     <a
         title="Добавить новую метрику"
-        href="/lightmetric_vue/type/form"
+        :href="newMetricUrl"
         class="add-metric-btn"
         @click.prevent="newMetric"
     >
@@ -142,7 +142,12 @@ export default {
         'statGraph',
         'modeDragAndDrops',
         'getIsAverageMode',
-    ])
+        'getUrls',
+        'getTypeLightmetric'
+    ]),
+    newMetricUrl() {
+      return this.getUrls[this.getTypeLightmetric].metricForm;
+    }
   }
 }
 </script>

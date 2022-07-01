@@ -1,7 +1,8 @@
 <template>
+
     <td
         class="td-main"
-        :class="classes"
+        :class="classes, {'green-shadow': showFormulaMetricOrange}"
         :style="{backgroundColor: data.color_row}"
         @click="changeCheckbox"
         @contextmenu.prevent="getMetricFormEditMode"
@@ -15,11 +16,11 @@
               class="td-main__checkbox"
               type="checkbox">
         </div>
-        <div v-if="!showFormulaMetric" class="td-main__content">
+        <div v-if="!showFormulaMetric || !data.formula?.length" class="td-main__content">
           {{data.name}}
         </div>
         <div
-            v-if="showFormulaMetric"
+            v-if="showFormulaMetric && data.formula?.length"
             class="td-main__system-data"
             :title="data.name"
         >
@@ -175,30 +176,6 @@ export default {
           dataForStat.data.push(null);
         }
 
-        //
-        // if (data.computed_value) {
-        //   if (this.isDateTime(data.computed_value)) {
-        //     const [hours, minutes] = data.computed_value.split(':');
-        //     dataForStat.data.push(parseFloat(((hours * 60 + minutes) / 60).toFixed(2)));
-        //   } else {
-        //     dataForStat.data.push(parseFloat(data.computed_value));
-        //   }
-        // } else if (data.value) {
-        //     if (this.isDateTime(data.value)) {
-        //       if (this.getUserOptions.typeRoundingInChart) {
-        //         const [hours, minutes] = data.value.split(':');
-        //         dataForStat.data.push(parseFloat(((hours * 60 + minutes) / 60).toFixed()));
-        //       } else {
-        //         dataForStat.data.push(parseFloat(data.value.replace(/:/g, '.')));
-        //
-        //       }
-        //     } else {
-        //       dataForStat.data.push(parseFloat(data.value));
-        //     }
-        // } else {
-        //     dataForStat.data.push(null);
-        // }
-
       })
       this.SET_DATA_FOR_STAT_GRAPHS(dataForStat);
     },
@@ -254,8 +231,10 @@ export default {
       return  Boolean(Object.values(this.data.cells).filter(cell => {
         return (cell.value !== null || cell.value !== '') && (cell.computed_value !== null || cell.computed_value !== '');
       }).length);
-
     },
+    showFormulaMetricOrange() {
+      return this.showFormulaMetric && this.data.formula?.length;
+    }
   },
   watch: {
     checkboxValue() {
@@ -276,6 +255,10 @@ export default {
     z-index: 10;
     width: 303px;
     padding-left: 3px;
+  &.green-shadow {
+    font-weight: bold;
+    box-shadow: 0 0 5px 2px #51aa51 inset;
+  }
   &__content-wrapper {
     display: flex;
   }
@@ -300,10 +283,13 @@ export default {
     flex: 1 1 auto;
     display: flex;
     justify-content: flex-end;
-    margin-right: 20px;
+    padding-right: 20px;
+    max-width: 303px;
+    overflow-x: hidden;
   }
   &__formula {
     margin-left: auto;
+    max-width: 303px;
   }
   &__show-stat-toggle {
     color: white;

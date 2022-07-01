@@ -13,6 +13,9 @@
         <div class="cell__value">{{ valueInOutput }}</div>
         <div v-if="unit" class="cell__unit">&nbsp;{{unit}}</div>
       </template>
+      <template v-if="!isEditValue && !valueInOutput?.length && formula?.length" >
+        <div class="cell__value cell__value_empty-after-processing-formula" data-tooltip="Результата вычисления формулы - нет!">&#9888;</div>
+      </template>
       <input
           class="cell__input"
           v-if="isEditValue"
@@ -41,8 +44,6 @@
 
 <script>
 import vCommentTrigger from './v-comment-trigger'
-import mComputedParamsCell from "@/mixins/m-computed-params-cell";
-import mComputedFormulaMethods from '@/mixins/m-computed-formula-methods';
 import vAveragePopup from "./v-average-popup"
 
 
@@ -56,14 +57,13 @@ import {
   } from 'vue';
 import {useStore} from 'vuex';
 import {updateColor} from '@/composable/utils/u-computed-params-sell';
-import {isTime, separatorThousands, evalValue, getArrayParams} from '@/composable/utils/utils';
+import {isTime, separatorThousands, evalValue, getArrayParams, convertToString} from '@/composable/utils/utils';
 
 import {useStoreGetters, useStoreActions} from '@/composable/use/useStore'
 
 
 export default {
   name: "v-td-cell",
-  mixins: [mComputedParamsCell, mComputedFormulaMethods],
   components: {
     vCommentTrigger,
     vAveragePopup
@@ -158,7 +158,8 @@ export default {
 
     const averageValues = reactive(p.averageValues);
 
-    let inputValue    = ref(data?.value || '');
+    let inputValue  = ref(data?.value != null ? data.value : '');
+
     if (data?.value) {
       value = toRef(data, 'value')
     }
@@ -215,8 +216,7 @@ export default {
 
     const defineValueInInputData = computed(() => {
       if (!data) { return '';}
-
-      if (data.computed_value !== null) {
+      if (data.computed_value != null) {
         return data.computed_value.toString().replace(/ /g, "");
       }
       if(data?.value){
@@ -235,6 +235,8 @@ export default {
     const processingValueIsAround = computed(() => {
       let value = defineValueInInputData.value;
       const valueLength = value.length;
+
+
       if (!valueIsNumber.value) {return value;}
       if (!valueLength || isNaN(parseInt(value))) {return '';}
 
@@ -252,6 +254,7 @@ export default {
      */
     const valueSeparatorThousands = computed(() => {
       let value = processingValueIsAround.value;
+
       const valueLength = value?.toString().length;
       if (valueIsNumber.value && valueLength) {
         value = separatorThousands(value);
@@ -293,34 +296,34 @@ export default {
       if (!isTime(props.data.value)) {
         if (params) {
           resultValueString = generateResultOnFormulaInCell(props.data, params);
-          resultData = evalValue(resultValueString) ? evalValue(resultValueString) : '';
-        } else if (isTime(props.data.value)) {
-          resultData = (props.data.value);
+          resultData = !resultValueString.includes('false') &&  evalValue(resultValueString) !== false ? evalValue(resultValueString) : '';
         } else {
-          resultData = evalValue(props.data.value) ? evalValue(props.data.value) : '';
+          resultData = evalValue(props.data.value) !== false ? evalValue(props.data.value) : '';
         }
 
         if (!isNaN(parseFloat(resultData))) {
           resultData = Math.round(resultData * 100) / 100;
         }
       } else {
-        resultData = props.data.value ?? '';
+        resultData = props.data.value != null ? props.data.value : '';
       }
 
-      if (props.data.computed_value != resultData) {
-
-        await SET_COMPUTED_VALUE({
-          metricId: props.data.type_id,
-          planedAt: props.data.planed_at,
-          value: resultData
-        })
-        await SET_DATA_FOR_UPDATING_COMPUTED_VALUE({
-          computedValue: resultData,
-          planed: props.data.planed_at,
-          typeId: props.data.type_id,
-          metricName: metricName.value
-        })
+      const valuesIsNaN = (isNaN(parseFloat(props.data.computed_value)) && isNaN(parseFloat(resultData)));
+      if ((!valuesIsNaN && parseFloat(props.data.computed_value) === parseFloat(resultData)) || props.data.computed_value === resultData) {
+        return false
       }
+
+      await SET_COMPUTED_VALUE({
+        metricId: props.data.type_id,
+        planedAt: props.data.planed_at,
+        value: resultData
+      })
+      await SET_DATA_FOR_UPDATING_COMPUTED_VALUE({
+        computedValue: resultData,
+        planed: props.data.planed_at,
+        typeId: props.data.type_id,
+        metricName: metricName.value
+      })
 
     }
 
@@ -331,7 +334,7 @@ export default {
       params.forEach ((param) => {
         resultValueString += getFormulaCell(param, cell);
       })
-      return evalValue(resultValueString);
+      return resultValueString;
     }
 
     function getFormulaCell(param, cell) {
@@ -358,7 +361,8 @@ export default {
 
       if (Number(cell.type_id) === Number(needleMetric.id)) {
         if (cell.value !== null && cell.value.toString().trim() !== '') {
-          return ` ${evalValue(cell.value)} `;
+          return  convertToString(cell.value).length > 0 ? ` ${cell.value} ` : false;
+          // return ` ${evalValue(cell.value)} `;
         }
         return false;
       }
@@ -371,7 +375,8 @@ export default {
             && currentNeedleCell.value !== ''
             && !isTime(currentNeedleCell.value)
         ) {
-          return ' ' +  evalValue(currentNeedleCell.value) + ' '
+          return ' ' +  currentNeedleCell.value + ' '
+          // return ' ' +  evalValue(currentNeedleCell.value) + ' '
         }
         return false;
       }
@@ -520,6 +525,20 @@ export default {
       outline: none;
       padding: 4px 12px;
     }
+  }
+
+  &__value_empty-after-processing-formula:hover::after {
+    content: attr(data-tooltip);
+    display: flex;
+    position: absolute;
+    padding: 5px;
+    background-color: #c9daf8;
+    z-index: 1;
+    white-space: nowrap;
+    left: 50%;
+    transform: translate(-50%, -3px);
+    border: 1px dashed #367fa9;
+    border-radius: 4px;
   }
 
 }

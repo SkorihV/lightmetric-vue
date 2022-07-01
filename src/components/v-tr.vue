@@ -1,6 +1,6 @@
 <template>
     <tr
-        v-if="!metric.isHideLikeGroup || isHide"
+        v-show="!metric.isHideLikeGroup || isHide"
         class="table__tr"
         :class="{
           'is-group': isGroup,

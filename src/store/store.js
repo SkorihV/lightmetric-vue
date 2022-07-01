@@ -18,17 +18,37 @@ let actions = {...init, ...formula, ...dragAndDrop, ...sidePanel, ...fetch, ...m
 export default createStore({
   state: {
     isLocal: null,
-    urlsForFetch      : {
-      dataList: '/lightmetric_vue/json_list',
-      metricForm: '/lightmetric_vue/type/form',
-      weekForm: '/lightmetric_vue/week/form',
-      cellForm: '/lightmetric_vue/weekcell/form',
-      updatePosition: '/lightmetric_vue/type/updatePositionMetrics',
-      savingMetricFormula: '/lightmetric_vue/metricformulaAdd',
-      updatingComputedValues: '/lightmetric_vue/cells/updateComputedValues',
-      AllAverageValuesForCategory: '/lightmetric_vue/getAllAverageValuesForCategory',
-      userOptionUrl : "/lightmetric_vue/updateUserOption",
-    },
+    lightmetricType: null,
+    urlsForFetch : {
+      week:         {
+        dataList: '/lightmetric_vue/json_list',
+        metricForm: '/lightmetric_vue/type/form',
+        weekForm: '/lightmetric_vue/week/form',
+        cellForm: '/lightmetric_vue/weekcell/form',
+        updatePosition: '/lightmetric_vue/type/updatePositionMetrics',
+        savingMetricFormula: '/lightmetric_vue/metricformulaAdd',
+        updatingComputedValues: '/lightmetric_vue/cells/updateComputedValues',
+        AllAverageValuesForCategory: '/lightmetric_vue/getAllAverageValuesForCategory',
+        userOptionUrl : "/lightmetric_vue/updateUserOption",
+        categoryList : "/lightmetric_vue/categories/list",
+        deletedMetric: "/lightmetric_vue/type/listBlocked"
+
+      },
+      month : {
+        dataList: '/lightmetricMonth/json_list',
+        metricForm: '/lightmetricMonth/type/form',
+        weekForm: '/lightmetricMonth/week/form',
+        cellForm: '/lightmetricMonth/weekcell/form',
+        updatePosition: '/lightmetricMonth/type/updatePositionMetrics',
+        savingMetricFormula: '/lightmetricMonth/metricformulaAdd',
+        updatingComputedValues: '/lightmetricMonth/cells/updateComputedValues',
+        AllAverageValuesForCategory: '/lightmetricMonth/getAllAverageValuesForCategory',
+        userOptionUrl : "/lightmetric_vue/updateUserOption",
+        categoryList : "/lightmetricMonth/categories/list",
+        deletedMetric: "/lightmetricMonth/type/listBlocked"
+      }
+    }
+,
 
     mondays           : [],  // список всех понедельников в выбранном диапазоне
     metricsGroups     : [],   // список категорий с группами метрик

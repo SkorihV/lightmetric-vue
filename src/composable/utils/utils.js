@@ -25,19 +25,14 @@ export function recognizeData(data){
 }
 
 export function evalValue(value) {
-  if (!value) { return false;}
-  value = value.toString().replace(/ /g, "");
+  // if (isNaN(parseFloat(value))) { return false;}
+  value = value?.toString().replace(/ /g, "") || false;
   try {
-    if (eval(value) !== undefined && !value.includes('false')  ) {
-      return  eval(value).toString();
-    }
+    return  eval(value);
   } catch (e) {
-    // console.error(e.message, 'Название категории - ' +  this.row.name.innerHTML.trim(),'Дата - ' + this.planed );
-    // console.error('Название категории - ' +  this.row.name.innerHTML.trim());
-    // console.error('Дата в ячейке - ' + this.planed );
-    // console.log('*****************************')
+    console.error(e.message );
+    return false;
   }
-  return false;
 }
 
 export function around(value) {
@@ -72,7 +67,6 @@ export function getArrayParams(metric) {
   if (metric.value.formula) {
     paramsObj = metric.value.formula.match(/((\+|\*|\-|\/|\(|\)){1})|\$[0-9]+\$|[0-9]+(\.{1}[0-9]+)?/g) || false;
   }
-
   if (!paramsObj) {
     return false;
   }

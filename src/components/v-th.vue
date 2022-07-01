@@ -93,6 +93,7 @@ export default {
     font-weight: 800;
     border-right: 1px dotted white;
     position: relative;
+    text-align: center;
     &_main {
       background: #276285;
     }

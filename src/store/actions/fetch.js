@@ -25,7 +25,7 @@ export default {
                     commit('PROCESSING_HIDE_SHOW_METRIC_FOR_LOCAL');
                 })
         } else {
-            return await axios.get(`${state.urlsForFetch.dataList}${search}`)
+            return await axios.get(`${state.urlsForFetch[state.lightmetricType].dataList}${search}`)
                 .then((data) => {
                     commit('SET_DATA_METRIC', data.data);
                 }).then(() => {
@@ -65,7 +65,7 @@ export default {
             return false;
         }
 
-        return axios.put(`${state.urlsForFetch.updatePosition}?metric_id_str=${listIds}`)
+        return axios.put(`${state.urlsForFetch[state.lightmetricType].updatePosition}?metric_id_str=${listIds}`)
             .then(response => {
                 if (response) {
                     console.log('Ok');
@@ -95,7 +95,7 @@ export default {
                     commit('VISIBILITY_MODAL', true);
                 })
         } else {
-            axios.get(`${state.urlsForFetch.metricForm}${search}`)
+            axios.get(`${state.urlsForFetch[state.lightmetricType].metricForm}${search}`)
                 .then(response => {
                     commit('PUT_HTML_FOR_MODAL', response.data);
                     commit('VISIBILITY_MODAL', true);
@@ -126,7 +126,7 @@ export default {
                 })
 
         } else {
-            axios.get(`${state.urlsForFetch.weekForm}${search}`)
+            axios.get(`${state.urlsForFetch[state.lightmetricType].weekForm}${search}`)
                 .then(response => {
                     commit('PUT_HTML_FOR_MODAL', response.data);
                     commit('VISIBILITY_MODAL', true);
@@ -158,7 +158,7 @@ export default {
                 })
 
         } else {
-            axios.get(`${state.urlsForFetch.cellForm}${search}`)
+            axios.get(`${state.urlsForFetch[state.lightmetricType].cellForm}${search}`)
                 .then(response => {
                     commit('PUT_HTML_FOR_MODAL', response.data);
                     commit('VISIBILITY_MODAL', true);
@@ -191,12 +191,17 @@ export default {
           })
 
     } else {
-      axios.get(`${state.urlsForFetch.cellForm}${search}`)
+      axios.get(`${state.urlsForFetch[state.lightmetricType].cellForm}${search}`)
           .then(response => {
             commit('PUT_HTML_FOR_MODAL', response.data);
           })
           .then(() => {
-            const valueInput = document.querySelector('#week_cell_form_value');
+            let valueInput = null;
+            if (this.state.lightmetricType === 'week') {
+              valueInput = document.querySelector('#week_cell_form_value');
+            } else if (this.state.lightmetricType === 'month') {
+              valueInput = document.querySelector( '#week_cell_month_form_value');
+            }
             if (valueInput) {
               valueInput.value = newValue;
               return true;
@@ -220,7 +225,7 @@ export default {
    */
    async SAVING_FORMULA_FOR_METRIC({commit, state, dispatch}, {formData, metricId}){
         dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', false);
-        const request = `${state.urlsForFetch.savingMetricFormula}?id=${metricId}`
+        const request = `${state.urlsForFetch[state.lightmetricType].savingMetricFormula}?id=${metricId}`
 
        const requestData = await fetch(request, {
            method: 'POST',
@@ -260,7 +265,7 @@ export default {
     async SUBMIT_FORM_METRIC({commit, dispatch, state}, {formData, dataForSubmit}) {
     dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', false);
     const metricId = dataForSubmit.metricId;
-        let responseUrl = `${state.urlsForFetch.metricForm}`
+        let responseUrl = `${state.urlsForFetch[state.lightmetricType].metricForm}`
 
         if (metricId) {
             responseUrl += `?metric_id=${metricId}`;
@@ -304,7 +309,7 @@ export default {
     async SUBMIT_FORM_WEEK({commit, dispatch, state}, {formData, dataForSubmit}) {
         const categoryId    = dataForSubmit.categoryId;
         const planet_at     = dataForSubmit.planed_at;
-        const responseUrl   = `${state.urlsForFetch.weekForm}?planed_at=${planet_at}&category_id=${categoryId}`;
+        const responseUrl   = `${state.urlsForFetch[state.lightmetricType].weekForm}?planed_at=${planet_at}&category_id=${categoryId}`;
 
         const response = await fetch(responseUrl, {
             method: 'POST',
@@ -330,7 +335,7 @@ export default {
         dispatch('INIT_PROCESSING_FORMULA_FOR_CELL', false);
         const metricId = dataForSubmit.metricId;
         const planet_at = dataForSubmit.planed_at;
-        const responseUrl = `${state.urlsForFetch.cellForm}?planed_at=${planet_at}&metric_id=${metricId}`;
+        const responseUrl = `${state.urlsForFetch[state.lightmetricType].cellForm}?planed_at=${planet_at}&metric_id=${metricId}`;
         const response = await fetch(responseUrl, {
             method: 'POST',
             body: formData,
@@ -425,7 +430,7 @@ export default {
       return false;
     }
 
-    await fetch(state.urlsForFetch.updatingComputedValues, {
+    await fetch(state.urlsForFetch[state.lightmetricType].updatingComputedValues, {
       method: 'POST',
       body: JSON.stringify(computedValues),
       headers: {
@@ -436,7 +441,7 @@ export default {
   },
 
   GET_AVERAGE_DATA({state, getters, commit}) {
-    let url = state.urlsForFetch.AllAverageValuesForCategory + '?';
+    let url = state.urlsForFetch[state.lightmetricType].AllAverageValuesForCategory + '?';
 
     getters.getCategoriesListIds.forEach(id => {
       url = `${url}categoryId[]=${id}&`;

@@ -46,6 +46,8 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-grow: 1;
+    padding-left: 10px;
   }
 
   .prompt {

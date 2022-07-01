@@ -4,6 +4,9 @@ export default {
         state.isLocal = window.document.location.host.includes('localhost');
     },
 
+    SET_TYPE_LIGHTMETRIC: state => {
+       state.lightmetricType =  document.querySelector('#lightmetricType').dataset.lightmetrictype;
+    },
     SET_DATA_METRIC(state, data) {
 
         for (let key in data.metricsGroups) {
@@ -373,6 +376,9 @@ export default {
     REPLACE_WEEK_DATA(state, data) {
         let week = {};
         if (state.mondaysData[data.categoryId][data.planed_at] !== undefined) {
+            console.log(data.categoryId)
+            console.log(data.planed_at)
+            console.log(state.mondaysData)
             week = state.mondaysData[data.categoryId][data.planed_at];
         }
 

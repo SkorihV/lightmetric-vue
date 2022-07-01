@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     async submitUserOption(e) {
-      const userOptionUrl = this.getUrls.userOptionUrl;
+      const userOptionUrl = this.getUrls[this.getTypeLightmetric].userOptionUrl;
       const formData = new FormData(e.target)
       let fetchResponse = await fetch(userOptionUrl, {
         method: 'POST',
@@ -57,6 +57,7 @@ export default {
     ...mapGetters([
         'getUserOptions',
         'getUrls',
+        'getTypeLightmetric'
     ])
   }
 }

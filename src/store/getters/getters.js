@@ -1,6 +1,15 @@
 export default {
 
     /**
+     * Получить тип светофора недельный / месячный - от этого зависят пути запросов.
+     * @param state
+     * @returns {null}
+     */
+    getTypeLightmetric: (state) => {
+        return state.lightmetricType;
+    },
+
+    /**
      * Получить список всех категорий с метриками внутри
      * @param state
      * @returns {[]}

@@ -44,7 +44,6 @@ export default {
     ...mapGetters([
         'categoryNameById',
         'getDataForUpdatedComputedValue',
-        'initUploadNewDataComputedValues'
     ]),
     categoryId() {
       if (this.metrics.length) {

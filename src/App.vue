@@ -15,15 +15,15 @@
     <div class="bottom-control-panel__add-metric">
       <a
           class="bottom-control-panel__add-link"
-          href="/lightmetric_vue/type/form"
+          :href="newMetricUrl"
           @click.prevent="newMetric"
       >Добавить метрику</a>
     </div>
     <div class="bottom-control-panel__list-categories">
-      <a href="/lightmetric/categories/list" class="btn btn-sm btn-danger">К списку категорий </a>
+      <a :href="categoryListUrl" class="btn btn-sm btn-danger">К списку категорий </a>
     </div>
     <div class="bottom-control-panel__list-metric-blocked">
-      <a href="/lightmetric/type/listBlocked" class="btn btn-sm btn-danger">Удаленные метрики </a>
+      <a :href="deletedMetricUrl" class="btn btn-sm btn-danger">Удаленные метрики </a>
     </div>
   </div>
   <v-modal />
@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import {mapActions, mapGetters} from 'vuex';
+import {mapActions, mapGetters, mapMutations} from 'vuex';
 import vTable from "@/components/v-table"
 import vControlPanel from '@/components/v-control-panel'
 import vFormulaInputBlock from '@/components/v-formula-input-block'
@@ -74,7 +74,18 @@ export default {
         'getDataForUpdatedComputedValue',
         'initUploadNewDataComputedValues',
         'isProcessingFormulaForCell',
-    ])
+        'getUrls',
+        'getTypeLightmetric'
+    ]),
+    newMetricUrl() {
+      return this.getUrls[this.getTypeLightmetric].metricForm;
+    },
+    categoryListUrl() {
+      return this.getUrls[this.getTypeLightmetric].categoryList;
+    },
+    deletedMetricUrl() {
+      return this.getUrls[this.getTypeLightmetric].deletedMetric;
+    }
   },
   methods:{
     ...mapActions([
@@ -90,6 +101,7 @@ export default {
         'UPDATE_POSITION_FOR_METRIC_GROUP',
         'RESET_MODAL'
     ]),
+    ...mapMutations(['SET_TYPE_LIGHTMETRIC']),
     initStorage() {
       const storage = JSON.parse(localStorage.getItem('group'));
       if (!storage) {
@@ -114,6 +126,9 @@ export default {
               })
               .catch((err) => console.error(err));
         }
+  },
+  created() {
+    this.SET_TYPE_LIGHTMETRIC();
   },
   mounted() {
     this.initStorage();

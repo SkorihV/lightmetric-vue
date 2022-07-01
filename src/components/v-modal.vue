@@ -31,7 +31,6 @@
 
 <script>
 import {mapActions, mapGetters} from "vuex";
-import mDragEndDropForModal from '@/mixins/m-drag-and-drom-for-modal'
 import vCommentElement from './v-comment-element'
 
 export default {
@@ -238,6 +237,16 @@ export default {
     }
 
     form[name='week_cell_form'] {
+      .editValue {
+        display: none;
+      }
+      ~.delete-comment-cell,
+      ~.delete.delete-hide{
+        display: none;
+      }
+    }
+
+    form[name='week_cell_month_form'] {
       .editValue {
         display: none;
       }
