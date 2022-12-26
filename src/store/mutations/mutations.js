@@ -34,7 +34,7 @@ export default {
         }
 
         state.mondays                   = data.mondays;
-        state.mondays.years             = null;
+        // state.mondays.years             = null;
         state.dateEnd                   = data.dateEnd;
         state.dateStart                 = data.dateStart;
         state.categories                = data.categories;

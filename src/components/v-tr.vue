@@ -60,7 +60,7 @@
           :metricId="metric.id"
           :isGroup="isGroup"
           :categoryId="Number(metric.type_category_id)"
-          :years="metric.years"
+          :years="metric?.years"
           :metricName="metric.name"
           :averageValues="averageValuesCells[monday]"
       >

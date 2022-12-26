@@ -1,24 +1,28 @@
 <template>
   <div
-      v-show="showModal"
-      ref="modal"
-      id="popup-block"
-      :class="{editMode: editMode}"
-      @submit.prevent="submitData"
-      @click="handlerDelete"
+    v-show="showModal"
+    ref="modal"
+    id="popup-block"
+    :class="{editMode: editMode}"
+    @submit.prevent="submitData"
+    @click="handlerDelete"
   >
     <div
-        id="popup-block__close"
-        @click="RESET_MODAL"
+      id="popup-block__close"
+      @click="RESET_MODAL"
     >
       <i class="fas fa-times"></i>
     </div>
     <div id="popup-block__content" >
+      <div v-if="isNormalizeData">
+        <p>Максимальное значение на графике - {{maxNumberOfGraph}}</p>
+        <p>Минимальное значение на графике - {{minNumberOfGraph}}</p>
+      </div>
       <div
-          v-show="statGraph.dataCells.length"
-          data-highcharts-chart="0"
-          style="overflow: hidden;"
-          id="popup-block-for-graphs"
+        v-show="statGraph.dataCells.length"
+        data-highcharts-chart="0"
+        style="overflow: hidden;"
+        id="popup-block-for-graphs"
       >
       </div>
       <div v-html="htmlForModal"></div>
@@ -46,11 +50,11 @@ export default {
 
   methods: {
     ...mapActions([
-        'SHOW_MODAL',
-        'RESET_MODAL',
-        'SUBMIT_FORM',
-        'DELETE_DATA',
-        'DELETE_COMMENT_FOR_CELL'
+      'SHOW_MODAL',
+      'RESET_MODAL',
+      'SUBMIT_FORM',
+      'DELETE_DATA',
+      'DELETE_COMMENT_FOR_CELL'
     ]),
     submitData(e) {
       const formData = new FormData(e.target)
@@ -74,9 +78,9 @@ export default {
         e.preventDefault();
 
         this.DELETE_COMMENT_FOR_CELL(this.$refs.modal)
-            .then(() => {
-              this.RESET_MODAL();
-            });
+          .then(() => {
+            this.RESET_MODAL();
+          });
       }
     },
 
@@ -133,29 +137,82 @@ export default {
         accessibility: false
       });
     },
+    normalizeNumber(number) {
+      const minNormalizeNumber = 0;
+      const maxNormalizeNumber = 100;
+
+      if (typeof number !== 'number') {
+        return number;
+      }
+      let returnNumber = minNormalizeNumber + ((number - this.minNumberOfGraph) / (this.maxNumberOfGraph - this.minNumberOfGraph) * (maxNormalizeNumber - minNormalizeNumber));
+      return parseFloat(returnNumber.toFixed(3))
+    }
   },
   computed: {
     ...mapGetters([
-        'showModal',
-        'statGraph',
-        'htmlForModal',
-        'editMode',
-        'displayingComment',
-        'dataForComment',
-        'getDataForSubmitForm',
-        'getIsSubmiting'
-    ])
+      'showModal',
+      'statGraph',
+      'htmlForModal',
+      'editMode',
+      'displayingComment',
+      'dataForComment',
+      'getDataForSubmitForm',
+      'getIsSubmiting',
+      'getUserOptions'
+    ]),
+    isNormalizeData() {
+      return this.getUserOptions?.typeNormalizeDataForGraph ? this.getUserOptions?.typeNormalizeDataForGraph.value : false;
+    },
+    maxNumberOfGraph() {
+      let arrayNumbers = [];
+      this.statGraph?.dataCells.forEach(itemData => {
+        itemData.data.forEach(value => {
+          if ( typeof value === 'number'){
+            arrayNumbers.push(value)
+          }
+        })
+      })
+      return Math.max(...arrayNumbers);
+    },
+    minNumberOfGraph() {
+      let arrayNumbers = [];
+      this.statGraph?.dataCells.forEach(itemData => {
+        itemData.data.forEach(value => {
+          if ( typeof value === 'number'){
+            arrayNumbers.push(value)
+          }
+        })
+      })
+      return Math.min(...arrayNumbers);
+    },
+    mutationDataCellsForNormalizeData() {
+      if (!this.isNormalizeData) {
+        return this.statGraph
+      }
+      const newData = JSON.parse(JSON.stringify(this.statGraph));
+      for (let key in newData.dataCells ) {
+        newData.dataCells[key].data = newData.dataCells[key].data.map(item => {
+          return this.normalizeNumber(item)
+        })
+      }
+      return newData;
+    }
   },
   watch: {
     showModal() {
-        if(this.showModal && this.statGraph.dataCells.length) {
-          this.createStat(this.statGraph);
-        }
-      },
+      if(this.showModal && this.statGraph.dataCells.length) {
+        this.createStat(this.mutationDataCellsForNormalizeData);
+      }
+    },
+    isNormalizeData() {
+      if(this.showModal && this.statGraph.dataCells.length) {
+        this.createStat(this.mutationDataCellsForNormalizeData);
+      }
+    },
     statGraph: {
       handler() {
         if(this.showModal && this.statGraph.dataCells.length) {
-          this.createStat(this.statGraph);
+          this.createStat(this.mutationDataCellsForNormalizeData);
         }
       },
       deep: true
@@ -194,6 +251,7 @@ export default {
   &__content {
     display: flex;
     overflow-y: auto;
+    flex-direction: column;
   }
 
   &__close {
